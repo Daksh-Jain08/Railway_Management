@@ -1,0 +1,13 @@
+<!-- train_creation.html -->
+{% extends 'main.html' %}
+
+{% block content %}
+
+  <h2>Create a Train</h2>
+  <form method="post" action="{% url 'create-train' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create Train</button>
+  </form>
+
+{% endblock %}

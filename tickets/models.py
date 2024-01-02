@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 from stations.models import Station
-from trains.models import Train, Schedule, Route
+from trains.models import Train, Schedule, Route, TrainRun
 from users.models import User
 
 
@@ -19,13 +19,28 @@ class Passenger(models.Model):
 
 
 class Ticket(models.Model):
+    statusChoices = (
+        ('waiting','Waiting'),
+        ('confirmed','Confirmed'),
+        ('cancelled','Cancelled')
+    )
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    train = models.ForeignKey(Train, on_delete=models.CASCADE)
+    train = models.ForeignKey(TrainRun, on_delete=models.CASCADE)
     departure_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='departure_tickets')
     destination_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='destination_tickets')
     booking_time = models.DateTimeField(auto_now_add=True)
-    passenger = models.ForeignKey(Passenger, on_delete=models.CASCADE)
+    passenger = models.OneToOneField(Passenger, on_delete=models.CASCADE)
+    seatNumber = models.PositiveIntegerField(null=False, default=0)
     unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    status = models.CharField(max_length=10, choices=statusChoices, null=True)
+    fare = models.IntegerField()
 
     def __str__(self):
-        return f"Ticket ID: {self.unique_id} --- {self.passenger} - {self.train} - {self.departure_station} to {self.destination_station}"
+        return f"Ticket ID: {self.unique_id} --- {self.passenger} - {self.train} - {self.departure_station} to {self.destination_station} - {self.status}"
+    
+    def calculate_fare(self, departure, destination):
+        fare = 0
+        return fare
+    
+    fare = property(calculate_fare)

@@ -2,6 +2,8 @@ from django.urls import path
 from . import views as base_views
 from users import views as users_views
 from trains import views as trains_views
+from stations import views as station_views
+from tickets import views as tickets_views
 
 urlpatterns = [
     path("", base_views.home, name='home'),
@@ -10,5 +12,10 @@ urlpatterns = [
     path("login/", users_views.loginUser, name='login'),
     path("logout/", users_views.logoutUser, name='logout'),
 
-    path('create-train', trains_views.CreateTrain, name='create-train')
+    path('create-train/', trains_views.CreateTrain, name='create-train'),
+
+    path('create-station/', station_views.CreateStation, name='create-station'),
+
+    # path('book-ticket/', tickets_views.TicketBookingView, name='book-ticket'),
+    # path('ticket-confirmation/', tickets_views.TicketBookingView, name='confirm-ticket')
 ]

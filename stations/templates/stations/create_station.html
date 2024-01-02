@@ -1,0 +1,12 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+  <h2>Create a Station</h2>
+  <form method="post" action="{% url 'create-station' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create Station</button>
+  </form>
+
+{% endblock %}

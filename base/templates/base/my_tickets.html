@@ -1,0 +1,9 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+{% for ticket in tickets %}
+    <li>{{ ticket }}</li>
+{% endfor %}
+
+{% endblock content %}

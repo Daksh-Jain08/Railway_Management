@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserRegistrationForm, LoginForm
+from base.models import Profile
 
 
 #register a user
@@ -12,6 +13,7 @@ def register(request):
         if form.is_valid():
             var = form.save()
             username = form.cleaned_data.get('username')
+            profile = Profile.objects.create(user=var)
             message = messages.success(request, f'Your account has been created! You can now log in')
             return redirect('login')
     else:

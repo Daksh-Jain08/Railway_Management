@@ -1,0 +1,8 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<h2>Hello, {{ username }}</h2>
+<p>You have booked {{ tickets_count }} tickets till date.</p>
+<p>You have Rs.{{ wallet }} in your wallet.</p>
+<a href="{% url 'my-tickets' %}">See your tickets</a>
+{% endblock content %}

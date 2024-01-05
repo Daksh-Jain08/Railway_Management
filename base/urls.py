@@ -7,6 +7,8 @@ from tickets import views as tickets_views
 
 urlpatterns = [
     path("", base_views.home, name='home'),
+    path("profile/", base_views.profileView, name='profile'),
+    path("my_tickets/", base_views.MyTicketsView, name='my-tickets'),
     
     path("register/", users_views.register, name='register'),
     path("login/", users_views.loginUser, name='login'),
@@ -17,6 +19,6 @@ urlpatterns = [
     path('create-station/', station_views.CreateStation, name='create-station'),
 
     path('book-ticket/', tickets_views.TicketBookingView, name='book-ticket'),
-    path('passenger-details', tickets_views.PassengerDetailsView, name='passenger-details'),
+    path('passenger-details/', tickets_views.PassengerDetailsView, name='passenger-details'),
     path('ticket-confirmation/', tickets_views.BookingConfirmationView, name='booking-confirmation')
 ]

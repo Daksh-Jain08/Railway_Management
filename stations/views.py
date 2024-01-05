@@ -5,15 +5,20 @@ from .forms import StationCreationForm
 
 
 def CreateStation(request):
-    message = None
-    if request.method == 'POST':
-        form = StationCreationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            message = messages.success(request, 'Station created succesfully')
-            return redirect('create-station')
-        else:
-            message = messages.error('Error validating Form')
-    form = StationCreationForm()
-    context = {'form': form, 'message': message}
-    return render(request, 'stations/create_station.html', context)
+    if request.user.is_staff:
+        message = None
+        if request.method == 'POST':
+            form = StationCreationForm(request.POST)
+            if form.is_valid():
+                form.save()
+                message = messages.success(request, 'Station created succesfully')
+                return redirect('create-station')
+            else:
+                message = messages.error('Error validating Form')
+        form = StationCreationForm()
+        context = {'form': form, 'message': message}
+        return render(request, 'stations/create_station.html', context)
+    
+    else:
+        message = messages.warning(request, "You don't have the permission to visit that page!")
+        return redirect('home')

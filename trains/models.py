@@ -26,6 +26,7 @@ class Train(models.Model):
     destination = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='destination')
     numberOfSeats = models.PositiveIntegerField()
     daysOfWeek = models.ManyToManyField(Day, help_text='Select the days of the week', blank=True)
+    fare = models.IntegerField(default=100, null=False)
 
     def __str__(self):
         return f"{self.trainNumber} - {self.trainName}"
@@ -35,6 +36,7 @@ class TrainRun(models.Model):
     departure_date = models.DateField()
     arrival_date = models.DateField()
     numberOfAvailableSeats = models.IntegerField(default=12)
+    fare = models.IntegerField(default=100, null=False)
 
     def __str__(self):
         return f"TrainRun for Train: {self.train} - Departure: {self.departure_date} - Arrival: {self.arrival_date}"

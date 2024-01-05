@@ -16,6 +16,7 @@ urlpatterns = [
 
     path('create-station/', station_views.CreateStation, name='create-station'),
 
-    # path('book-ticket/', tickets_views.TicketBookingView, name='book-ticket'),
-    # path('ticket-confirmation/', tickets_views.TicketBookingView, name='confirm-ticket')
+    path('book-ticket/', tickets_views.TicketBookingView, name='book-ticket'),
+    path('passenger-details', tickets_views.PassengerDetailsView, name='passenger-details'),
+    path('ticket-confirmation/', tickets_views.BookingConfirmationView, name='booking-confirmation')
 ]

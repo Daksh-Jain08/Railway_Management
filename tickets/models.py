@@ -13,6 +13,7 @@ class Passenger(models.Model):
     name = models.CharField(max_length=100)
     age = models.PositiveSmallIntegerField()
     gender = models.CharField(max_length=1, choices=genderChoices)
+    ticket = models.ForeignKey('Ticket', on_delete=models.CASCADE, null=True, blank=True, related_name='passengers')
 
     def __str__(self):
         return f'{self.name}'
@@ -27,20 +28,14 @@ class Ticket(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     train = models.ForeignKey(TrainRun, on_delete=models.CASCADE)
+    date = models.DateField(null=True)
     departure_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='departure_tickets')
     destination_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='destination_tickets')
     booking_time = models.DateTimeField(auto_now_add=True)
-    passenger = models.OneToOneField(Passenger, on_delete=models.CASCADE)
+    passenger = models.OneToOneField(Passenger, on_delete=models.CASCADE, null=True, related_name='tickets')
     seatNumber = models.PositiveIntegerField(null=False, default=0)
     unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     status = models.CharField(max_length=10, choices=statusChoices, null=True)
-    fare = models.IntegerField()
 
     def __str__(self):
         return f"Ticket ID: {self.unique_id} --- {self.passenger} - {self.train} - {self.departure_station} to {self.destination_station} - {self.status}"
-    
-    def calculate_fare(self, departure, destination):
-        fare = 0
-        return fare
-    
-    fare = property(calculate_fare)

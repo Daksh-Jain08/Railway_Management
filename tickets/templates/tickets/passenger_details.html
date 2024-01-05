@@ -1,0 +1,15 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<h2>Passenger Details</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <table>
+        {% for form in formset %}
+        {{ form.as_p }}
+        {% endfor %}
+    </table>
+    <button type="submit">Book Tickets</button>
+</form>
+{% endblock content %}

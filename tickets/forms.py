@@ -18,3 +18,10 @@ class TicketBookingForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+class DeleteTicketForm(forms.ModelForm):
+    ticket = forms.ModelChoiceField(queryset=Ticket.objects.all())
+
+    class Meta:
+        model = Ticket
+        fields = []

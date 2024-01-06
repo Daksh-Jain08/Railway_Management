@@ -34,8 +34,8 @@ class Ticket(models.Model):
     booking_time = models.DateTimeField(auto_now_add=True)
     passenger = models.OneToOneField(Passenger, on_delete=models.CASCADE, null=True, related_name='tickets')
     seatNumber = models.PositiveIntegerField(null=False, default=0)
-    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, primary_key=True)
     status = models.CharField(max_length=10, choices=statusChoices, null=True)
 
     def __str__(self):
-        return f"Ticket ID: {self.unique_id} --- {self.passenger} - {self.train} - {self.departure_station} to {self.destination_station} - {self.status}"
+        return f"Ticket ID: {self.id} --- {self.passenger} - {self.train} - {self.departure_station} to {self.destination_station} - {self.status}"

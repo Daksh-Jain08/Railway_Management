@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.forms import formset_factory
 from .models import Ticket, Passenger
-from .forms import TicketBookingForm, PassengerForm
+from .forms import TicketBookingForm, PassengerForm, DeleteTicketForm
 from base.models import Profile
+from django.contrib.auth.decorators import login_required
 
 tickets = []
 

@@ -1,0 +1,12 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+  <h2>Add money to your wallet</h2>
+  <form method="post" action="{% url 'add-money' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add Money</button>
+  </form>
+
+{% endblock %}

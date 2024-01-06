@@ -9,6 +9,8 @@ urlpatterns = [
     path("", base_views.home, name='home'),
     path("profile/", base_views.profileView, name='profile'),
     path("my_tickets/", base_views.MyTicketsView, name='my-tickets'),
+    path("add-money/", base_views.MoneyAddingView, name='add-money'),
+    path('delete-ticket/<str:pk>/', base_views.TicketDeletingView, name='delete-ticket'),
     
     path("register/", users_views.register, name='register'),
     path("login/", users_views.loginUser, name='login'),
@@ -20,5 +22,5 @@ urlpatterns = [
 
     path('book-ticket/', tickets_views.TicketBookingView, name='book-ticket'),
     path('passenger-details/', tickets_views.PassengerDetailsView, name='passenger-details'),
-    path('ticket-confirmation/', tickets_views.BookingConfirmationView, name='booking-confirmation')
+    path('ticket-confirmation/', tickets_views.BookingConfirmationView, name='booking-confirmation'),
 ]

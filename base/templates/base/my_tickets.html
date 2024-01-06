@@ -3,7 +3,8 @@
 {% block content %}
 
 {% for ticket in tickets %}
-    <li>{{ ticket }}</li>
+<a href="{% url 'delete-ticket' ticket.id %}">Cancel Ticket</a>
+    <li>{{ ticket }}</li> 
 {% endfor %}
 
 {% endblock content %}

@@ -1,7 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.contrib import messages
-from tickets.models import Ticket
+from trains.models import Train
+from tickets.models import Ticket, Passenger
+from tickets.forms import PassengerForm
 from .models import Profile
 from .forms import MoneyAddingForm
 
@@ -9,6 +12,11 @@ from .forms import MoneyAddingForm
 
 @login_required(login_url='/login')
 def home(request):
+
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+    trains = Train.objects.filter(
+        Q(trainName__icontains=q))
+    
     user = request.user
     is_customer = user.is_customer
     is_staff = user.is_staff
@@ -18,7 +26,7 @@ def home(request):
 @login_required(login_url='/login')
 def profileView(request):
     user = request.user
-    tickets = Ticket.objects.filter(user=user)
+    tickets = Ticket.objects.filter(user=user, status='confirmed' or 'waiting')
     tickets_count = tickets.count()
     profile = Profile.objects.get(user=user)
     wallet = profile.wallet
@@ -52,7 +60,7 @@ def MoneyAddingView(request):
 
 
 @login_required(login_url='/login')
-def TicketDeletingView(request, pk):
+def TicketCancellingView(request, pk):
     ticket = Ticket.objects.get(id=pk)
     user = ticket.user
     profile = Profile.objects.get(user=user)
@@ -63,10 +71,28 @@ def TicketDeletingView(request, pk):
         message = messages.warning(request, "What are you trying to do? You are not allowed to do this!!")
 
     if request.method == 'POST':
-        ticket.delete()
+        ticket.status = 'cancelled'
+        ticket.save()
         profile.wallet += fare
         profile.save()
         message = messages.success(request, "Ticket has been canceled successfully. Money has been refunded.")
         return redirect('my-tickets')
     
-    return render(request, 'base/delete.html', {'obj': ticket})
+    return render(request, 'delete.html', {'obj': ticket})
+
+@login_required(login_url='/login')
+def EditPassengerDetailsView(request, pk):
+    message = None
+    passenger = Passenger.objects.get(id=pk)
+    if request.method == 'POST':
+        form = PassengerForm(request.POST, instance=passenger)
+        if form.is_valid():
+            form.save()
+            message = messages.success(request, "The pasenger details have been updated successfully.")
+            return redirect('my-tickets')
+        else:
+            message = messages.error(request, "Error validating Form!!")
+    else:
+        form = PassengerForm(instance=passenger)
+    context = {'form': form, 'message': message}
+    return render(request, 'base/edit_passenger_details.html', context)

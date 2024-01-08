@@ -1,0 +1,12 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<h2>All Trains</h2>
+{% for train in trains %}
+    <a href=" {% url 'all-tickets' train.id %}"> See all upcoming Bookings</a><span>|</span>
+    <a href=" {% url 'edit-train' train.id %}"> Edit Train Details</a><span>|</span>
+    <a href=" {% url 'delete-train' train.id %}"> Delete Train</a>
+    <li>{{ train }}</li>
+{% endfor %}
+{% endblock content %}

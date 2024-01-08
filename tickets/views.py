@@ -1,36 +1,56 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+import random
 from django.forms import formset_factory
 from .models import Ticket, Passenger
-from .forms import TicketBookingForm, PassengerForm, DeleteTicketForm
+from .forms import TicketBookingForm, PassengerForm
 from base.models import Profile
 from django.contrib.auth.decorators import login_required
 
+
 tickets = []
 
+
+@login_required(login_url='/login')
 def TicketBookingView(request):
     message = None
     if request.method == 'POST':
         form = TicketBookingForm(request.POST)
         if form.is_valid():
             user = request.user
-            train = form.cleaned_data.get('train')
+            trainRun = form.cleaned_data.get('train')
             date = form.cleaned_data.get('date')
             departure = form.cleaned_data.get('departure_station')
             destination = form.cleaned_data.get('destination_station')
             numberOfTickets = form.cleaned_data.get('numberOfTickets')
 
-            if check_balance(user, train, numberOfTickets):
-                available_seats = get_available_seats(train)
-                if available_seats>=numberOfTickets:
-                    for _ in range(numberOfTickets):
-                        ticket = Ticket.objects.create(user=user, train=train, date=date, departure_station=departure, destination_station=destination)
-                        tickets.append(ticket)
+            train = trainRun.train
+            numberOfTicketsBooked = 0
 
-                    return redirect('passenger-details')
+            available_seats = get_available_seats(trainRun)
+            if available_seats>=numberOfTickets:
+                occupied_seats = []
+                booked_tickets = Ticket.objects.filter(train=trainRun)
+                for booked_ticket in booked_tickets:
+                    seat = booked_ticket.seatNumber
+                    occupied_seats.append(seat)
+                
+                unoccupied_seats = []
+                for i in range(train.numberOfSeats):
+                    if i not in occupied_seats:
+                        unoccupied_seats.append(i)
 
-                else:
-                    message = messages.error(request, f'There are only {available_seats} seats available!')
+                for _ in range(numberOfTickets):
+                    seat_number = random.choice(unoccupied_seats)
+                    unoccupied_seats.remove(seat_number)
+                    if available_seats<(numberOfTickets-numberOfTicketsBooked):
+                        ticket = Ticket.objects.create(user=user, train=trainRun, date=date, departure_station=departure, destination_station=destination, seatNumber=seat_number, status='confirmed')
+                    else:
+                        ticket = Ticket.objects.create(user=user, train=trainRun, date=date, departure_station=departure, destination_station=destination, status='waiting')
+                    tickets.append(ticket)
+
+                return redirect('passenger-details')
             else:
                 message = messages.warning(request, "You don't have sufficient ,money to book these tickets!")
             
@@ -50,16 +70,19 @@ def get_available_seats(train):
     available_seats = numberOfSeats-ticket_count
     return available_seats
 
+
 def check_balance(user, train, numberOfTickets):
+    print(type(user))
     profile = Profile.objects.get(user=user)
     wallet = profile.wallet
-    fare = train.fare*numberOfTickets
-    if fare<wallet:
+    fare = train.fare * numberOfTickets
+    if fare<=wallet:
         return True
     else:
         return False
 
 
+@login_required(login_url='/login')
 def PassengerDetailsView(request):
     if len(tickets)!=0:
         message = None
@@ -95,7 +118,9 @@ def PassengerDetailsView(request):
     else:
         messages.warning(request, "You are not allowed to enter that page in this manner")
         return redirect ('home')
-
+    
+    
+@login_required(login_url='/login')
 def BookingConfirmationView(request):
     if len(tickets)!=0:
         user = tickets[0].user

@@ -1,8 +1,5 @@
 from django import forms
-from django.forms import formset_factory
-from django.db import transaction
 from .models import Ticket, Passenger
-from trains.models import TrainRun
 
 class PassengerForm(forms.ModelForm):
     class Meta:
@@ -18,10 +15,3 @@ class TicketBookingForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
         }
-
-class DeleteTicketForm(forms.ModelForm):
-    ticket = forms.ModelChoiceField(queryset=Ticket.objects.all())
-
-    class Meta:
-        model = Ticket
-        fields = []

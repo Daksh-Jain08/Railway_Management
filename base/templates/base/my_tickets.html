@@ -4,6 +4,7 @@
 
 {% for ticket in tickets %}
 <a href="{% url 'delete-ticket' ticket.id %}">Cancel Ticket</a>
+<a href="{% url 'edit-passenger-details' ticket.passenger.id %}">Edit Passenger Details</a>
     <li>{{ ticket }}</li> 
 {% endfor %}
 

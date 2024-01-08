@@ -10,13 +10,18 @@ urlpatterns = [
     path("profile/", base_views.profileView, name='profile'),
     path("my_tickets/", base_views.MyTicketsView, name='my-tickets'),
     path("add-money/", base_views.MoneyAddingView, name='add-money'),
-    path('delete-ticket/<str:pk>/', base_views.TicketDeletingView, name='delete-ticket'),
+    path('delete-ticket/<str:pk>/', base_views.TicketCancellingView, name='delete-ticket'),
+    path('edit-passenger-details/<str:pk>/', base_views.EditPassengerDetailsView, name='edit-passenger-details'),
     
     path("register/", users_views.register, name='register'),
     path("login/", users_views.loginUser, name='login'),
     path("logout/", users_views.logoutUser, name='logout'),
 
     path('create-train/', trains_views.CreateTrain, name='create-train'),
+    path('all-tickets/<str:pk>/', trains_views.AllTicketsView, name='all-tickets'),
+    path('all-trains/', trains_views.AllTrainsView, name='all-trains'),
+    path('edit-train/<str:pk>/', trains_views.EditTrianView, name='edit-train'),
+    path('delete-train/<str:pk>/', trains_views.DeleteTrainView, name='delete-train'),
 
     path('create-station/', station_views.CreateStation, name='create-station'),
 

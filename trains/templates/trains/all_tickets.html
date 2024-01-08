@@ -1,0 +1,12 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+
+{% for trianRun, tickets in trainRun_tickets %}
+    <h3>{{trainRun}}</h3>
+    {% for ticket in tickets %}
+        <li>{{ticket}}</li>
+    {% endfor %}
+{% endfor %}
+{% endblock content %}

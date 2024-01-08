@@ -2,12 +2,5 @@
 
 {% block content %}
 
-<div><a href="{% url 'profile' %}">Your profile</a></div>
-<div><a href="{% url 'my-tickets' %}">Your tickets</a></div>
-<div><a href="{% url 'book-ticket' %}">Book Ticket</a></div>
 
-{% if is_staff %}
-    <div><a href="{% url 'create-train' %}">Create Train</a></div>
-    <div><a href="{% url 'create-station' %}">Create Station</a></div>
-{% endif %}
 {% endblock content %}

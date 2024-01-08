@@ -4,7 +4,6 @@ from stations.models import Station
 from trains.models import Train, Schedule, Route, TrainRun
 from users.models import User
 
-
 class Passenger(models.Model):
     genderChoices = (
         ('M', 'Male'),
@@ -20,13 +19,7 @@ class Passenger(models.Model):
 
 
 class Ticket(models.Model):
-    statusChoices = (
-        ('waiting','Waiting'),
-        ('confirmed','Confirmed'),
-        ('cancelled','Cancelled')
-    )
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     train = models.ForeignKey(TrainRun, on_delete=models.CASCADE)
     date = models.DateField(null=True)
     departure_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='departure_tickets')
@@ -34,8 +27,7 @@ class Ticket(models.Model):
     booking_time = models.DateTimeField(auto_now_add=True)
     passenger = models.OneToOneField(Passenger, on_delete=models.CASCADE, null=True, related_name='tickets')
     seatNumber = models.PositiveIntegerField(null=False, default=0)
-    id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, primary_key=True)
-    status = models.CharField(max_length=10, choices=statusChoices, null=True)
+    status = models.CharField(max_length=10, null=True)
 
     def __str__(self):
-        return f"Ticket ID: {self.id} --- {self.passenger} - {self.train} - {self.departure_station} to {self.destination_station} - {self.status}"
+        return f"Ticket ID: {self.id} --- {self.user} --- {self.passenger} - {self.train}, Departure: {self.departure_station}, Destination {self.destination_station}, Seat Number: {self.seatNumber}, status: {self.status}"

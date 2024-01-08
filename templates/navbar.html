@@ -7,4 +7,19 @@
 <a class="" href="{% url 'login' %}">Login</a>
 {% endif %}
 <a href="{% url 'register' %}">Register</a>
+
+<form method="GET" action="{% url 'home' %}">
+    <input type="text" name="q" placeholder="Search for Trains..."/>
+</form>
+
+<a href="{% url 'profile' %}">Your profile</a> <span>|</span>
+<a href="{% url 'my-tickets' %}">Your tickets</a> <span>|</span>
+<a href="{% url 'book-ticket' %}">Book Ticket</a> <span>|</span>
+
+{% if is_staff %}
+    <a href="{% url 'create-train' %}">Create Train</a> <span>|</span>
+    <a href="{% url 'create-station' %}">Create Station</a> <span>|</span>
+    <a href="{% url 'all-trains' %}">All Trains</a>
+{% endif %}
+
 <hr>

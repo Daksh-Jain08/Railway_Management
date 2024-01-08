@@ -20,7 +20,7 @@ class TrainCreationForm(forms.ModelForm):
 
     class Meta:
         model = Train
-        fields = ['trainNumber', 'trainName', 'source', 'destination', 'numberOfSeats', 'fare']
+        fields = ['trainNumber', 'trainName', 'source', 'destination', 'numberOfSeats', 'fare', 'id']
 
 class RouteCreationForm(forms.ModelForm):
     class Meta:

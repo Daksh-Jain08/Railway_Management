@@ -1,5 +1,6 @@
 from django import forms
-from .models import Train, Route
+from .models import Train, Route, Day
+from stations.models import Station
 
 class TrainCreationForm(forms.ModelForm):
     DAYS_CHOICES = [
@@ -12,17 +13,19 @@ class TrainCreationForm(forms.ModelForm):
         ('Sun', 'Sunday'),
     ]
 
-    days_of_week = forms.MultipleChoiceField(
-        choices=DAYS_CHOICES,
+    days_of_week = forms.ModelMultipleChoiceField(
+        queryset=Day.objects.all(),
         widget=forms.CheckboxSelectMultiple,
         required=True,
     )
 
+    numberOfStops = forms.IntegerField()
+
     class Meta:
         model = Train
-        fields = ['trainNumber', 'trainName', 'source', 'destination', 'numberOfSeats', 'fare', 'id']
+        fields = ['trainNumber', 'trainName', 'source', 'destination','totalDistance', 'numberOfSeats', 'fare', 'id']
 
-class RouteCreationForm(forms.ModelForm):
+class RouteForm(forms.ModelForm):
     class Meta:
         model = Route
-        fields = '__all__'
+        fields = ['station', 'distance']

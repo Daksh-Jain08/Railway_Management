@@ -1,0 +1,15 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+  <h2>Create a Train</h2>
+  <form method="post" action="">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for route_form in formset %}
+      {{ route_form.as_p }}
+    {% endfor %}
+    <button type="submit">Create Train</button>
+  </form>
+
+{% endblock %}

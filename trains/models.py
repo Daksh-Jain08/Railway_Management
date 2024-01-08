@@ -24,6 +24,7 @@ class Train(models.Model):
     trainName = models.CharField(max_length=100)
     source = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='source')
     destination = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='destination')
+    totalDistance = models.IntegerField(null=True)
     numberOfSeats = models.PositiveIntegerField()
     daysOfWeek = models.ManyToManyField(Day, help_text='Select the days of the week', blank=True)
     fare = models.IntegerField(default=100, null=False)
@@ -53,8 +54,10 @@ class Schedule(models.Model):
 class Route(models.Model):
     train = models.ForeignKey(Train, on_delete=models.CASCADE, related_name='routes')
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
-    order = models.PositiveIntegerField()
     distance = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+
+    class Meta:
+        ordering =['distance']
 
     def __str__(self):
         return f"{self.train} - {self.order}. {self.station}"

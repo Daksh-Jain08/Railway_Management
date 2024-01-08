@@ -4,5 +4,6 @@
 <h2>Hello, {{ username }}</h2>
 <p>You have {{ tickets_count }} tickets booked for upcoming journey.</p>
 <p>You have Rs.{{ wallet }} in your wallet.</p>
-<a href="{% url 'my-tickets' %}">See your tickets</a>
+<a href="{% url 'my-tickets' %}">See your tickets</a><span>|</span>
+<a href="{% url 'add-money' %}">Add Money</a>
 {% endblock content %}

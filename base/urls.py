@@ -18,6 +18,8 @@ urlpatterns = [
     path("logout/", users_views.logoutUser, name='logout'),
 
     path('create-train/', trains_views.CreateTrain, name='create-train'),
+    path('create-train-route/<int:pk>/<int:num_stops>', trains_views.TrainRouteView, name='create-train-route'),
+    path('view-train-route/<str:pk>', trains_views.ViewTrainRoute, name='view-train-route'),
     path('all-tickets/<str:pk>/', trains_views.AllTicketsView, name='all-tickets'),
     path('all-trains/', trains_views.AllTrainsView, name='all-trains'),
     path('edit-train/<str:pk>/', trains_views.EditTrianView, name='edit-train'),

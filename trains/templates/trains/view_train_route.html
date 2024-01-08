@@ -1,0 +1,11 @@
+{% extends 'main.html' %}
+
+{% block content %}
+  <h2>Train Route</h2>
+  <p>Train: {{ train }}</p>
+  <ul>
+    {% for route in train_route %}
+      <li> {{ route.station.stationName }} - {{ route.distance }}km</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

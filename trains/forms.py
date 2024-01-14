@@ -1,5 +1,5 @@
 from django import forms
-from .models import Train, Route, Day
+from .models import Train, Route, Day, Schedule
 from stations.models import Station
 
 class TrainCreationForm(forms.ModelForm):
@@ -23,9 +23,21 @@ class TrainCreationForm(forms.ModelForm):
 
     class Meta:
         model = Train
-        fields = ['trainNumber', 'trainName', 'source', 'destination','totalDistance', 'numberOfSeats', 'fare', 'id']
+        fields = ['trainNumber', 'trainName', 'source', 'destination', 'daysOfJourney', 'totalDistance', 'numberOfSeats', 'baseFare', 'farePerKilometre', 'numberOfStops', 'id']
 
 class RouteForm(forms.ModelForm):
     class Meta:
         model = Route
         fields = ['station', 'distance']
+
+query = Station.objects.none()
+
+class ScheduleForm(forms.ModelForm):
+    class Meta:
+        model = Schedule
+        fields = ['daysRequiredToReach', 'arrivalTime', 'departureTime']
+
+        widgets = {
+            'arrivalTime': forms.TimeInput(attrs={'type': 'time'}),
+            'departureTime': forms.TimeInput(attrs={'type': 'time'})
+        }

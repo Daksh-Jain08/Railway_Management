@@ -13,7 +13,7 @@ class Day(models.Model):
             ('Sun', 'Sunday'),
         ]
 
-    day_code = models.TextField(max_length=3, choices=daysChoice)
+    day_code = models.TextField(max_length=3, choices=daysChoice, default='Mon')
 
     def __str__(self):
         return self.day_code
@@ -23,11 +23,16 @@ class Train(models.Model):
     trainNumber = models.IntegerField(unique=True)
     trainName = models.CharField(max_length=100)
     source = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='source')
+    departureTime = models.TimeField(null=True)
     destination = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='destination')
-    totalDistance = models.IntegerField(null=True)
+    arrivalTime = models.TimeField(null=True)
+    daysOfJourney = models.PositiveIntegerField(null=True)
+    totalDistance = models.IntegerField()
     numberOfSeats = models.PositiveIntegerField()
     daysOfWeek = models.ManyToManyField(Day, help_text='Select the days of the week', blank=True)
-    fare = models.IntegerField(default=100, null=False)
+    baseFare = models.DecimalField(null=True, decimal_places=2, max_digits=10)
+    farePerKilometre = models.DecimalField(null=True, decimal_places=2, max_digits=10)
+    numberOfStops = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.trainNumber} - {self.trainName}"
@@ -37,19 +42,20 @@ class TrainRun(models.Model):
     departure_date = models.DateField()
     arrival_date = models.DateField()
     numberOfAvailableSeats = models.IntegerField(default=12)
-    fare = models.IntegerField(default=100, null=False)
 
     def __str__(self):
-        return f"TrainRun for Train: {self.train} - Departure: {self.departure_date} - Arrival: {self.arrival_date}"
+        return f"Train: {self.train} - Departure: {self.departure_date} - Arrival: {self.arrival_date}"
 
 class Schedule(models.Model):
-    train = models.ForeignKey(Train, on_delete=models.CASCADE, related_name='schedules')
+    trainRun = models.ForeignKey(TrainRun, on_delete=models.CASCADE, related_name='schedules', null=True)
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
-    arrivalTime = models.DateTimeField()
-    departureTime = models.DateTimeField()
+    daysRequiredToReach = models.PositiveIntegerField(default=0)
+    date = models.DateField(null=True)
+    arrivalTime = models.TimeField()
+    departureTime = models.TimeField()
 
     def __str__(self):
-        return f"{self.train} - {self.station} - Departure: {self.departureTime}, Arrival: {self.arrivalTime}"
+        return f"{self.trainRun.train} - {self.station} - {self.date} - Departure: {self.departureTime}, Arrival: {self.arrivalTime}"
 
 class Route(models.Model):
     train = models.ForeignKey(Train, on_delete=models.CASCADE, related_name='routes')
@@ -60,4 +66,4 @@ class Route(models.Model):
         ordering =['distance']
 
     def __str__(self):
-        return f"{self.train} - {self.order}. {self.station}"
+        return f"{self.train} - {self.station}"

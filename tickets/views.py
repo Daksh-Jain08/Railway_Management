@@ -2,9 +2,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import random
+import datetime
 from django.forms import formset_factory
 from .models import Ticket, Passenger
-from .forms import TicketBookingForm, PassengerForm
+from trains.models import Train, TrainRun, Route, Schedule
+from stations.models import Station
+from .forms import TicketBookingForm, PassengerForm, RouteChoosingForm
 from base.models import Profile
 from django.contrib.auth.decorators import login_required
 
@@ -13,60 +16,104 @@ tickets = []
 
 
 @login_required(login_url='/login')
+def ValidTrainsView(request):
+    departure = request.GET.get('departure')
+    destination = request.GET.get('destination')
+    date_day = int(request.GET.get('date_day'))
+    date_month = int(request.GET.get('date_month'))
+    date_year = int(request.GET.get('date_year'))
+    numberOfPassengers = request.GET.get('numberOfPassengers')
+
+    date = datetime.date(date_year, date_month, date_day).isoformat()
+    departure_station = Station.objects.get(pk=departure)
+    destination_station = Station.objects.get(pk=destination)
+    trains =  Train.objects.all()
+    valid_trainRuns = []
+    for train in trains:
+        try:
+            departure_route = Route.objects.get(train=train, station=departure_station)
+            destination_route = Route.objects.get(train=train, station=destination_station)
+            trainRuns = TrainRun.objects.filter(train=train)
+        except:
+            pass
+        else:
+            if departure_route.distance < destination_route.distance:
+                for trainRun in trainRuns:
+                    try:
+                        schedule = Schedule.objects.get(trainRun=trainRun, station=departure_station, date=date)
+                    except:
+                        print("Error")
+                    else:
+                        valid_trainRuns.append(trainRun)
+    context ={'trainRuns': valid_trainRuns, 'departure': departure, 'destination': destination, 'num_tickets': numberOfPassengers, 'date': date}
+    return render(request, 'tickets/valid_trains.html', context)
+
+@login_required(login_url='/login')
+def RouteChoosingView(request):
+    form = RouteChoosingForm()
+    context = {'form': form}
+    return render(request, 'tickets/route_selection.html', context)
+
+@login_required(login_url='/login')
 def TicketBookingView(request):
     message = None
-    if request.method == 'POST':
-        form = TicketBookingForm(request.POST)
-        if form.is_valid():
-            user = request.user
-            trainRun = form.cleaned_data.get('train')
-            date = form.cleaned_data.get('date')
-            departure = form.cleaned_data.get('departure_station')
-            destination = form.cleaned_data.get('destination_station')
-            numberOfTickets = form.cleaned_data.get('numberOfTickets')
 
-            train = trainRun.train
-            numberOfTicketsBooked = 0
+    user = request.user
+    id = request.GET.get('pk')
+    date = request.GET.get('date')
+    departure = request.GET.get('departure')
+    destination = request.GET.get('destination')
+    numberOfTickets = int(request.GET.get('num_tickets'))
 
-            available_seats = get_available_seats(trainRun)
-            if available_seats>=numberOfTickets:
-                occupied_seats = []
-                booked_tickets = Ticket.objects.filter(train=trainRun)
-                for booked_ticket in booked_tickets:
-                    seat = booked_ticket.seatNumber
-                    occupied_seats.append(seat)
-                
-                unoccupied_seats = []
-                for i in range(train.numberOfSeats):
-                    if i not in occupied_seats:
-                        unoccupied_seats.append(i)
+    departure_station = Station.objects.get(id=departure)
+    destination_station = Station.objects.get(id=destination)
+    trainRun = TrainRun.objects.get(id=id)
+    profile = Profile.objects.get(user=user)
+    train = trainRun.train
+    departure_route = Route.objects.get(train=train, station=departure_station)
+    destination_route = Route.objects.get(train=train, station=destination_station)
+    distance = destination_route.distance - departure_route.distance
+    fare = (train.baseFare + (train.farePerKilometre*distance))*numberOfTickets
+    numberOfTicketsBooked = 0
 
-                for _ in range(numberOfTickets):
-                    seat_number = random.choice(unoccupied_seats)
-                    unoccupied_seats.remove(seat_number)
-                    if available_seats<(numberOfTickets-numberOfTicketsBooked):
-                        ticket = Ticket.objects.create(user=user, train=trainRun, date=date, departure_station=departure, destination_station=destination, seatNumber=seat_number, status='confirmed')
-                    else:
-                        ticket = Ticket.objects.create(user=user, train=trainRun, date=date, departure_station=departure, destination_station=destination, status='waiting')
-                    tickets.append(ticket)
-
-                return redirect('passenger-details')
-            else:
-                message = messages.warning(request, "You don't have sufficient ,money to book these tickets!")
-            
+    available_seats = get_available_seats(trainRun)
+    if profile.wallet>fare:
+        occupied_seats = []
+        booked_tickets = Ticket.objects.filter(trainRun=trainRun)
+        for booked_ticket in booked_tickets:
+            seat = booked_ticket.seatNumber
+            occupied_seats.append(seat)
         
-        else:
-            message = messages.error(request, 'Error validating Form')
+        unoccupied_seats = []
+        for i in range(1, train.numberOfSeats):
+            if i not in occupied_seats:
+                unoccupied_seats.append(i)
 
-    form = TicketBookingForm()
-    context = {'form': form, 'message': message}
-    return render(request, 'tickets/book_ticket.html', context)
+        for _ in range(numberOfTickets):
+            seat_number = random.choice(unoccupied_seats)
+            unoccupied_seats.remove(seat_number)
+            if available_seats>=(numberOfTickets-numberOfTicketsBooked):
+                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatNumber=seat_number, status='confirmed')
+            else:
+                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, status='waiting')
+            tickets.append(ticket)
+
+        print(unoccupied_seats)
+        return redirect('passenger-details')
+    else:
+        print(profile.wallet)
+        print(type(profile.wallet))
+        print(fare)
+        print(type(fare))
+        messages.warning(request, "You don't have sufficient ,money to book these tickets!")
+        
+    return redirect('choose-route')
 
 
-def get_available_seats(train):
-    tickets = Ticket.objects.filter(train=train)
+def get_available_seats(trainRun):
+    tickets = Ticket.objects.filter(trainRun=trainRun)
     ticket_count = tickets.count()
-    numberOfSeats = train.numberOfAvailableSeats
+    numberOfSeats = trainRun.numberOfAvailableSeats
     available_seats = numberOfSeats-ticket_count
     return available_seats
 
@@ -124,8 +171,12 @@ def PassengerDetailsView(request):
 def BookingConfirmationView(request):
     if len(tickets)!=0:
         user = tickets[0].user
-        train = tickets[0].train
-        fare = train.fare
+        trainRun = tickets[0].trainRun
+        train = trainRun.train
+        departure_route = Route.objects.get(train=train, station=tickets[0].departure_station)
+        destination_route = Route.objects.get(train=train, station=tickets[0].destination_station)
+        distance = destination_route.distance - departure_route.distance
+        fare = (train.baseFare + train.farePerKilometre*distance)
         profile = Profile.objects.get(user=user)
         profile.wallet -= fare*(len(tickets))
         profile.save()

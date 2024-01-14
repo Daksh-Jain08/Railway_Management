@@ -19,6 +19,7 @@ urlpatterns = [
 
     path('create-train/', trains_views.CreateTrain, name='create-train'),
     path('create-train-route/<int:pk>/<int:num_stops>', trains_views.TrainRouteView, name='create-train-route'),
+    path('create-train-schedule/<int:pk>/<int:num_stops>/', trains_views.TrainScheduleView, name='create-train-schedule'),
     path('view-train-route/<str:pk>', trains_views.ViewTrainRoute, name='view-train-route'),
     path('all-tickets/<str:pk>/', trains_views.AllTicketsView, name='all-tickets'),
     path('all-trains/', trains_views.AllTrainsView, name='all-trains'),
@@ -30,4 +31,6 @@ urlpatterns = [
     path('book-ticket/', tickets_views.TicketBookingView, name='book-ticket'),
     path('passenger-details/', tickets_views.PassengerDetailsView, name='passenger-details'),
     path('ticket-confirmation/', tickets_views.BookingConfirmationView, name='booking-confirmation'),
+    path('choose-route/', tickets_views.RouteChoosingView, name='choose-route'),
+    path('valid-trains/', tickets_views.ValidTrainsView, name='valid-trains'),
 ]

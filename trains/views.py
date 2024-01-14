@@ -1,10 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.forms import formset_factory
-from .forms import TrainCreationForm, RouteForm
-from .models import Train, TrainRun, Route
+from .forms import TrainCreationForm, RouteForm, ScheduleForm
+from .models import Train, TrainRun, Route, Schedule
+from stations.models import Station
 from tickets.models import Ticket
 from django.contrib import messages
+from datetime import timedelta
 
 @login_required(login_url='/login')
 def CreateTrain(request):
@@ -29,28 +31,69 @@ def CreateTrain(request):
     else:
         message = messages.warning(request, "You don't have the permission to visit this page!")
         return redirect('home')
-    
+
+
+def TrainScheduleView(request, pk, num_stops):
+    train = get_object_or_404(Train, id=pk)
+    message = None
+    routes = Route.objects.filter(train=train)
+    stations = []
+    for route in routes:
+        station = route.station
+        stations.append(station)
+
+    ScheduleFormSet = formset_factory(ScheduleForm, extra=num_stops)
+    if request.method == 'POST':
+        schedule_formset = ScheduleFormSet(request.POST)
+        trainRuns = TrainRun.objects.filter(train=train)
+        for schedule_form in schedule_formset:
+            if schedule_form.is_valid():
+                i=0
+                for trainRun in trainRuns:
+                    schedule = schedule_form.save(commit=False)
+                    schedule.station = stations[i]
+                    schedule.trainRun = trainRun
+                    schedule.Date = trainRun.departure_date + timedelta(days=schedule.daysRequiredToReach)
+                    schedule.save()
+                    i+=1
+                Schedule.objects.create(trainRun=trainRun, station=train.source, daysRequiredToReach=0, Date=trainRun.departure_date, arrivalTime=train.departureTime, departureTime=train.departureTime)
+                Schedule.objects.create(trainRun=trainRun, station=train.destination, daysRequiredToReach=train.daysOfJourney, Date=trainRun.arrival_date, arrivalTime=train.arrivalTime, departureTime=train.arrivalTime)
+            else:
+                train.delete()
+                message = messages.error(request, 'Error validating form!')
+        
+        return redirect('all-trains')
+    else:
+        schedule_formset = ScheduleFormSet()
+        dict = {}
+        i=0
+        for schedule_form in schedule_formset:
+            dict[schedule_form] = stations[i]
+            i+=1
+    context = {'dict': dict.items(), 'message': message}
+    return render(request, 'trains/create_train_schedule.html', context)
 
 def TrainRouteView(request, pk, num_stops):
     train = get_object_or_404(Train, id=pk)
     message = None
     RouteFormSet = formset_factory(RouteForm, extra=num_stops)
     if request.method == 'POST':
-        formset = RouteFormSet(request.POST)
-        for route_form in formset:
+        route_formset = RouteFormSet(request.POST)
+        for route_form in route_formset:
             if route_form.is_valid():
                 route = route_form.save(commit=False)
                 route.train = train
                 route.save()
             else:
                 train.delete()
-                message = messages.error(request, f"{formset.errors}")
+                message = messages.error(request, f"{route_formset.errors}")
+
         Route.objects.create(train=train, station=train.destination, distance=train.totalDistance)
         Route.objects.create(train=train, station=train.source, distance=0)
-        return redirect('all-trains')
+        return redirect('create-train-schedule', pk=train.id, num_stops=num_stops)
     else:
-        formset = RouteFormSet()
-    context = {'formset': formset, 'message': message}
+        route_formset = RouteFormSet()
+    context = {'formset': route_formset, 'message': message}
     return render(request, 'trains/create_train_route.html', context)
 
 @login_required(login_url='/login')
@@ -69,7 +112,7 @@ def AllTicketsView(request, pk):
         trainRuns = TrainRun.objects.filter(train=train)
         trainRun_tickets = {}
         for trainRun in trainRuns:
-            tickets = Ticket.objects.filter(train=trainRun)
+            tickets = Ticket.objects.filter(trainRun=trainRun)
             trainRun_tickets[trainRun] = tickets
         
         context = {'trainRun_tickets': trainRun_tickets.items()}
@@ -125,14 +168,18 @@ def DeleteTrainView(request, pk):
             trainRuns = TrainRun.objects.filter(train=train)
             tickets = []
             for trainRun in trainRuns:
-                ticket_trainRun = Ticket.objects.filter(train = trainRun)
+                ticket_trainRun = Ticket.objects.filter(trainRun = trainRun)
                 tickets.append(ticket_trainRun)
             
             for ticket_trainRun in tickets:
                 for ticket in ticket_trainRun:
                     ticket_user = ticket.user
                     profile = ticket_user.profile
-                    profile.wallet += train.fare
+                    departure_route = Route.objects.get(train=train, station=ticket.departure_station)
+                    destination_route = Route.objects.get(train=train, station=ticket.destination_station)
+                    distance = destination_route.distance - departure_route.distance
+                    fare = (train.baseFare + (train.farePerKilometre*distance))
+                    profile.wallet += fare
                     profile.save()
             train.delete()
 

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib import messages
-from trains.models import Train
+from trains.models import Train, Route
 from tickets.models import Ticket, Passenger
 from tickets.forms import PassengerForm
 from .models import Profile
@@ -64,8 +64,11 @@ def TicketCancellingView(request, pk):
     ticket = Ticket.objects.get(id=pk)
     user = ticket.user
     profile = Profile.objects.get(user=user)
-    train = ticket.train
-    fare = train.fare
+    trainRun = ticket.trainRun
+    departure_route = Route.objects.get(train=trainRun.train, station=ticket.departure_station)
+    destination_route = Route.objects.get(train=trainRun.train, station=ticket.destination_station)
+    distance = destination_route.distance - departure_route.distance
+    fare = (trainRun.train.baseFare + (trainRun.train.farePerKilometre*distance))
 
     if request.user != ticket.user:
         message = messages.warning(request, "What are you trying to do? You are not allowed to do this!!")

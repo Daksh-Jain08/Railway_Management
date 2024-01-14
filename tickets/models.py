@@ -20,7 +20,7 @@ class Passenger(models.Model):
 
 class Ticket(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
-    train = models.ForeignKey(TrainRun, on_delete=models.CASCADE)
+    trainRun = models.ForeignKey(TrainRun, on_delete=models.CASCADE)
     date = models.DateField(null=True)
     departure_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='departure_tickets')
     destination_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='destination_tickets')
@@ -30,4 +30,4 @@ class Ticket(models.Model):
     status = models.CharField(max_length=10, null=True)
 
     def __str__(self):
-        return f"Ticket ID: {self.id} --- {self.user} --- {self.passenger} - {self.train}, Departure: {self.departure_station}, Destination {self.destination_station}, Seat Number: {self.seatNumber}, status: {self.status}"
+        return f"Ticket ID: {self.id} --- {self.user} --- {self.passenger} - {self.trainRun.train}, Departure: {self.departure_station}, Destination {self.destination_station}, Seat Number: {self.seatNumber}, status: {self.status}"

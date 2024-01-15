@@ -3,7 +3,9 @@
 {% block content %}
 
 {% for ticket in tickets %}
-<a href="{% url 'delete-ticket' ticket.id %}">Cancel Ticket</a>
+{% if ticket.status != 'cancelled' %}
+    <a href="{% url 'delete-ticket' ticket.id %}">Cancel Ticket</a>
+{% endif %}
 <a href="{% url 'edit-passenger-details' ticket.passenger.id %}">Edit Passenger Details</a>
     <li>{{ ticket }}</li> 
 {% endfor %}

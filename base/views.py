@@ -11,12 +11,7 @@ from .forms import MoneyAddingForm
 # Create your views here.
 
 @login_required(login_url='/login')
-def home(request):
-
-    q = request.GET.get('q') if request.GET.get('q') != None else ''
-    trains = Train.objects.filter(
-        Q(trainName__icontains=q))
-    
+def home(request):    
     user = request.user
     is_customer = user.is_customer
     is_staff = user.is_staff
@@ -62,6 +57,9 @@ def MoneyAddingView(request):
 @login_required(login_url='/login')
 def TicketCancellingView(request, pk):
     ticket = Ticket.objects.get(id=pk)
+    if ticket.status == 'cancelled':
+        messages.error(request, "The ticket is already cancelled!!")
+        return redirect('my-tickets')
     user = ticket.user
     profile = Profile.objects.get(user=user)
     trainRun = ticket.trainRun

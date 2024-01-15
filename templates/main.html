@@ -7,6 +7,8 @@
     <title>Railway Management</title>
 </head>
 <body>
+    {% load socialaccount %}
+    <a href="{% provider_login_url 'google'%}">Login with Google</a>
     {% include 'navbar.html' %}
 
     {% if messages %}

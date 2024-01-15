@@ -24,7 +24,10 @@ def ValidTrainsView(request):
     date_year = int(request.GET.get('date_year'))
     numberOfPassengers = request.GET.get('numberOfPassengers')
 
-    date = datetime.date(date_year, date_month, date_day).isoformat()
+    date = datetime.date(date_year, date_month, date_day)
+    if date < datetime.date.today():
+        messages.error(request, "Please choose a date that is yet to come.")
+        return redirect('choose-route')
     departure_station = Station.objects.get(pk=departure)
     destination_station = Station.objects.get(pk=destination)
     trains =  Train.objects.all()
@@ -45,7 +48,7 @@ def ValidTrainsView(request):
                         print("Error")
                     else:
                         valid_trainRuns.append(trainRun)
-    context ={'trainRuns': valid_trainRuns, 'departure': departure, 'destination': destination, 'num_tickets': numberOfPassengers, 'date': date}
+    context ={'trainRuns': valid_trainRuns, 'departure': departure, 'destination': destination, 'num_tickets': numberOfPassengers, 'day': date_day, 'month': date_month, 'year': date_year}
     return render(request, 'tickets/valid_trains.html', context)
 
 @login_required(login_url='/login')
@@ -60,11 +63,14 @@ def TicketBookingView(request):
 
     user = request.user
     id = request.GET.get('pk')
-    date = request.GET.get('date')
     departure = request.GET.get('departure')
     destination = request.GET.get('destination')
     numberOfTickets = int(request.GET.get('num_tickets'))
+    day = int(request.GET.get('day'))
+    month = int(request.GET.get('month'))
+    year = int(request.GET.get('year'))
 
+    date = datetime.date(year,month,day)
     departure_station = Station.objects.get(id=departure)
     destination_station = Station.objects.get(id=destination)
     trainRun = TrainRun.objects.get(id=id)

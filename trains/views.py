@@ -6,7 +6,8 @@ from .models import Train, TrainRun, Route, Schedule
 from stations.models import Station
 from tickets.models import Ticket
 from django.contrib import messages
-from datetime import timedelta
+from datetime import timedelta, datetime
+from django.utils import timezone
 
 @login_required(login_url='/login')
 def CreateTrain(request):
@@ -20,6 +21,7 @@ def CreateTrain(request):
                 train.save()
                 train.daysOfWeek.set(form.cleaned_data.get('days_of_week'))
                 message = messages.success(request, 'Train successfully created')
+                create_train_runs(train)
 
                 return redirect('create-train-route', pk=train.id, num_stops=num_stops)
             else:
@@ -33,6 +35,23 @@ def CreateTrain(request):
         return redirect('home')
 
 
+def create_train_runs(train):
+        current_date = timezone.now().date()
+        end_date = current_date + timedelta(days=30)
+
+        train_days = set(train.daysOfWeek.values_list('day_code', flat=True))
+
+        while current_date <= end_date:
+            if current_date.strftime('%a') in train_days:
+                TrainRun.objects.create(
+                    train=train,
+                    departure_date=current_date,
+                    arrival_date=current_date + timedelta(days=train.daysOfJourney),
+                    numberOfAvailableSeats=train.numberOfSeats,
+                )
+
+            current_date += timedelta(days=1)
+
 def TrainScheduleView(request, pk, num_stops):
     train = get_object_or_404(Train, id=pk)
     message = None
@@ -44,23 +63,30 @@ def TrainScheduleView(request, pk, num_stops):
 
     ScheduleFormSet = formset_factory(ScheduleForm, extra=num_stops)
     if request.method == 'POST':
+        print("Entered1")
         schedule_formset = ScheduleFormSet(request.POST)
         trainRuns = TrainRun.objects.filter(train=train)
-        for schedule_form in schedule_formset:
-            if schedule_form.is_valid():
-                i=0
-                for trainRun in trainRuns:
-                    schedule = schedule_form.save(commit=False)
-                    schedule.station = stations[i]
-                    schedule.trainRun = trainRun
-                    schedule.Date = trainRun.departure_date + timedelta(days=schedule.daysRequiredToReach)
-                    schedule.save()
-                    i+=1
-                Schedule.objects.create(trainRun=trainRun, station=train.source, daysRequiredToReach=0, Date=trainRun.departure_date, arrivalTime=train.departureTime, departureTime=train.departureTime)
-                Schedule.objects.create(trainRun=trainRun, station=train.destination, daysRequiredToReach=train.daysOfJourney, Date=trainRun.arrival_date, arrivalTime=train.arrivalTime, departureTime=train.arrivalTime)
-            else:
-                train.delete()
-                message = messages.error(request, 'Error validating form!')
+        print(schedule_formset)
+        if schedule_formset.is_valid():
+            print('Entered2')
+            for trainRun in trainRuns:
+                i=1
+                print('Entered3')
+                for schedule_form in schedule_formset:
+                    daysRequiredToReach = schedule_form.cleaned_data.get('daysRequiredToReach')
+                    arrivalTime = schedule_form.cleaned_data.get('arrivalTime')
+                    departureTime = schedule_form.cleaned_data.get('departureTime')
+                    station = stations[i]
+                    date = trainRun.departure_date + timedelta(days=daysRequiredToReach)
+                    Schedule.objects.create(trainRun=trainRun, station=station, date=date, daysRequiredToReach=daysRequiredToReach, arrivalTime=arrivalTime, departureTime=departureTime)
+                    if i != len(stations)-2:
+                        i+=1
+                    Schedule.objects.create(trainRun=trainRun, station=train.source, daysRequiredToReach=0, date=trainRun.departure_date, arrivalTime=train.departureTime, departureTime=train.departureTime)
+                    Schedule.objects.create(trainRun=trainRun, station=train.destination, daysRequiredToReach=train.daysOfJourney, date=trainRun.arrival_date, arrivalTime=train.arrivalTime, departureTime=train.arrivalTime)
+        else:
+            train.delete()
+            print(schedule_formset.errors)
+            message = messages.error(request, 'Error validating form!')
         
         return redirect('all-trains')
     else:
@@ -70,7 +96,7 @@ def TrainScheduleView(request, pk, num_stops):
         for schedule_form in schedule_formset:
             dict[schedule_form] = stations[i]
             i+=1
-    context = {'dict': dict.items(), 'message': message}
+    context = {'dict': dict.items(), 'schedule_formset': schedule_formset, 'message': message}
     return render(request, 'trains/create_train_schedule.html', context)
 
 def TrainRouteView(request, pk, num_stops):
@@ -81,9 +107,13 @@ def TrainRouteView(request, pk, num_stops):
         route_formset = RouteFormSet(request.POST)
         for route_form in route_formset:
             if route_form.is_valid():
-                route = route_form.save(commit=False)
-                route.train = train
-                route.save()
+                if route_form.cleaned_data.get('station') != train.source and route_form.cleaned_data.get('station') != train.destination:
+                    route = route_form.save(commit=False)
+                    route.train = train
+                    route.save()
+                else:
+                    messages.error(request, "The train cannot have a stop at the source or destination!")
+                    return redirect('create-train-route' ,pk=train.id, num_stops=num_stops)
             else:
                 train.delete()
                 message = messages.error(request, f"{route_formset.errors}")

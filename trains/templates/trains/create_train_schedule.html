@@ -5,7 +5,7 @@
   <h2>Create a Train</h2>
   <form method="POST" action="">
     {% csrf_token %}
-    {{ formset.management_form }}
+    {{ schedule_formset.management_form }}
     {% for schedule_form, station in dict %}
         <h5>Station: {{station}}</h5>
       {{ schedule_form.as_p }}

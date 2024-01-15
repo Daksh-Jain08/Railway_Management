@@ -3,7 +3,7 @@
 {% block content %}
 
 {% for trainRun in trainRuns %}
-    {{ trainRun }} <a href="{% url 'book-ticket'%}?pk={{trainRun.id}}&departure={{departure}}&destination={{destination}}&num_tickets={{num_tickets}}&date={{date}}">Book Tickets</a>
+    {{ trainRun }} <a href="{% url 'book-ticket'%}?pk={{trainRun.id}}&departure={{departure}}&destination={{destination}}&num_tickets={{num_tickets}}&day={{day}}&month={{month}}&year={{year}}">Book Tickets</a>
 {% endfor %}
 
 {% endblock content %}

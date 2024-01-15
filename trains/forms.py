@@ -23,14 +23,17 @@ class TrainCreationForm(forms.ModelForm):
 
     class Meta:
         model = Train
-        fields = ['trainNumber', 'trainName', 'source', 'destination', 'daysOfJourney', 'totalDistance', 'numberOfSeats', 'baseFare', 'farePerKilometre', 'numberOfStops', 'id']
+        fields = ['trainNumber', 'trainName', 'source', 'departureTime', 'destination', 'arrivalTime', 'daysOfJourney', 'totalDistance', 'numberOfSeats', 'baseFare', 'farePerKilometre', 'numberOfStops', 'id']
+
+        widgets = {
+            'arrivalTime': forms.TimeInput(attrs={'type': 'time'}),
+            'departureTime': forms.TimeInput(attrs={'type': 'time'})
+        }
 
 class RouteForm(forms.ModelForm):
     class Meta:
         model = Route
         fields = ['station', 'distance']
-
-query = Station.objects.none()
 
 class ScheduleForm(forms.ModelForm):
     class Meta:

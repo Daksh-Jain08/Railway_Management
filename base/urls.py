@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views as base_views
 from users import views as users_views
 from trains import views as trains_views
@@ -6,6 +6,8 @@ from stations import views as station_views
 from tickets import views as tickets_views
 
 urlpatterns = [
+    path("accounts/", include("allauth.urls")),
+
     path("", base_views.home, name='home'),
     path("profile/", base_views.profileView, name='profile'),
     path("my_tickets/", base_views.MyTicketsView, name='my-tickets'),

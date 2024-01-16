@@ -5,7 +5,7 @@ import random
 import datetime
 from django.forms import formset_factory
 from .models import Ticket, Passenger
-from trains.models import Train, TrainRun, Route, Schedule
+from trains.models import Train, TrainRun, Route, Schedule, SeatClass
 from stations.models import Station
 from .forms import TicketBookingForm, PassengerForm, RouteChoosingForm
 from base.models import Profile
@@ -23,6 +23,7 @@ def ValidTrainsView(request):
     date_month = int(request.GET.get('date_month'))
     date_year = int(request.GET.get('date_year'))
     numberOfPassengers = request.GET.get('numberOfPassengers')
+    seatClass = request.GET.get('seatClass')
 
     date = datetime.date(date_year, date_month, date_day)
     if date < datetime.date.today():
@@ -48,7 +49,7 @@ def ValidTrainsView(request):
                         print("Error")
                     else:
                         valid_trainRuns.append(trainRun)
-    context ={'trainRuns': valid_trainRuns, 'departure': departure, 'destination': destination, 'num_tickets': numberOfPassengers, 'day': date_day, 'month': date_month, 'year': date_year}
+    context ={'trainRuns': valid_trainRuns, 'departure': departure, 'destination': destination, 'num_tickets': numberOfPassengers, 'day': date_day, 'month': date_month, 'year': date_year, 'seatClass': seatClass}
     return render(request, 'tickets/valid_trains.html', context)
 
 @login_required(login_url='accounts/login/')
@@ -70,60 +71,92 @@ def TicketBookingView(request):
     day = int(request.GET.get('day'))
     month = int(request.GET.get('month'))
     year = int(request.GET.get('year'))
+    seat_class = request.GET.get('seatClass')
 
     date = datetime.date(year,month,day)
     departure_station = Station.objects.get(id=departure)
     destination_station = Station.objects.get(id=destination)
     trainRun = TrainRun.objects.get(id=id)
+    seatClass = SeatClass.objects.get(id=seat_class)
     profile = Profile.objects.get(user=user)
     train = trainRun.train
     departure_route = Route.objects.get(train=train, station=departure_station)
     destination_route = Route.objects.get(train=train, station=destination_station)
     distance = destination_route.distance - departure_route.distance
-    fare = (train.baseFare + (train.farePerKilometre*distance))*numberOfTickets
+
     numberOfTicketsBooked = 0
 
-    available_seats = get_available_seats(trainRun)
-    if profile.wallet>fare:
-        occupied_seats = []
-        booked_tickets = Ticket.objects.filter(trainRun=trainRun)
-        for booked_ticket in booked_tickets:
-            seat = booked_ticket.seatNumber
-            occupied_seats.append(seat)
-        
-        unoccupied_seats = []
-        for i in range(1, train.numberOfSeats):
+    occupied_seats = []
+    booked_tickets = Ticket.objects.filter(trainRun=trainRun, seatClass=seatClass)
+    for booked_ticket in booked_tickets:
+        seat = booked_ticket.seatNumber
+        occupied_seats.append(seat)
+
+    unoccupied_seats = []
+    if(seatClass.seat_class=='1A'):
+        fare = (train.baseFare1AC + (train.farePerKilometre*distance))*numberOfTickets
+        for i in range(1, train.numberOf1AC):
+            if i not in occupied_seats:
+                unoccupied_seats.append(i)
+    elif(seatClass.seat_class=='2A'):
+        fare = (train.baseFare2AC + (train.farePerKilometre*distance))*numberOfTickets
+        for i in range(1, train.numberOf2AC):
+            if i not in occupied_seats:
+                unoccupied_seats.append(i)
+    elif(seatClass.seat_class=='3A'):
+        fare = (train.baseFare3AC + (train.farePerKilometre*distance))*numberOfTickets
+        for i in range(1, train.numberOf3AC):
+            if i not in occupied_seats:
+                unoccupied_seats.append(i)
+    elif(seatClass.seat_class=='S'):
+        fare = (train.baseFareSleeper + (train.farePerKilometre*distance))*numberOfTickets
+        for i in range(1, train.numberOfSleeper):
             if i not in occupied_seats:
                 unoccupied_seats.append(i)
 
+    available_seats = get_available_seats(trainRun, seatClass)
+
+    if profile.wallet>fare:
         for _ in range(numberOfTickets):
             seat_number = random.choice(unoccupied_seats)
             unoccupied_seats.remove(seat_number)
             if available_seats>=(numberOfTickets-numberOfTicketsBooked):
-                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatNumber=seat_number, status='confirmed')
+                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatNumber=seat_number, seatClass=seatClass, fare=fare, status='confirmed')
                 numberOfTicketsBooked+=1
-                trainRun.numberOfAvailableSeats-=1
-                trainRun.save() 
+                if(seatClass.seat_class=='1A'):
+                    trainRun.numberOfAvailable1AC-=1
+                if(seatClass.seat_class=='2A'):
+                    trainRun.numberOfAvailable2AC-=1
+                if(seatClass.seat_class=='3A'):
+                    trainRun.numberOfAvailable3AC-=1
+                if(seatClass.seat_class=='S'):
+                    trainRun.numberOfAvailableSleeper-=1
+                trainRun.save()
             else:
-                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, status='waiting')
+                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatClass=seatClass, status='waiting')
             tickets.append(ticket)
 
         print(unoccupied_seats)
         return redirect('passenger-details')
     else:
-        print(profile.wallet)
-        print(type(profile.wallet))
-        print(fare)
-        print(type(fare))
         messages.warning(request, "You don't have sufficient ,money to book these tickets!")
         
     return redirect('choose-route')
 
 
-def get_available_seats(trainRun):
-    tickets = Ticket.objects.filter(trainRun=trainRun)
+def get_available_seats(trainRun, seatClass):
+    tickets = Ticket.objects.filter(trainRun=trainRun, seatClass=seatClass)
     ticket_count = tickets.count()
-    numberOfSeats = trainRun.numberOfAvailableSeats
+    print(seatClass)
+    if(seatClass.seat_class=='3A'):
+        numberOfSeats = trainRun.numberOfAvailable1AC
+    if(seatClass.seat_class=='2A'):
+        numberOfSeats = trainRun.numberOfAvailable2AC
+    if(seatClass.seat_class=='1A'):
+        numberOfSeats = trainRun.numberOfAvailable3AC
+    if(seatClass.seat_class=='S'):
+        numberOfSeats = trainRun.numberOfAvailableSleeper
+    
     available_seats = numberOfSeats-ticket_count
     return available_seats
 
@@ -181,12 +214,7 @@ def PassengerDetailsView(request):
 def BookingConfirmationView(request):
     if len(tickets)!=0:
         user = tickets[0].user
-        trainRun = tickets[0].trainRun
-        train = trainRun.train
-        departure_route = Route.objects.get(train=train, station=tickets[0].departure_station)
-        destination_route = Route.objects.get(train=train, station=tickets[0].destination_station)
-        distance = destination_route.distance - departure_route.distance
-        fare = (train.baseFare + train.farePerKilometre*distance)
+        fare = tickets[0].fare
         profile = Profile.objects.get(user=user)
         profile.wallet -= fare*(len(tickets))
         profile.save()

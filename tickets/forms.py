@@ -1,6 +1,6 @@
 from django import forms
 from stations.models import Station
-from .models import Ticket, Passenger
+from .models import Ticket, Passenger, SeatClass
 
 class PassengerForm(forms.ModelForm):
     class Meta:
@@ -22,6 +22,7 @@ class RouteChoosingForm(forms.Form):
     destination = forms.ModelChoiceField(queryset=Station.objects.all())
     date = forms.DateField(widget=forms.SelectDateWidget)
     numberOfPassengers = forms.IntegerField()
+    seatClass = forms.ModelChoiceField(queryset=SeatClass.objects.all())
     widgets = {
         'date': forms.SelectDateWidget(),
     }

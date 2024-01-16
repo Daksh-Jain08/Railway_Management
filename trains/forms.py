@@ -3,15 +3,6 @@ from .models import Train, Route, Day, Schedule
 from stations.models import Station
 
 class TrainCreationForm(forms.ModelForm):
-    DAYS_CHOICES = [
-        ('Mon', 'Monday'),
-        ('Tue', 'Tuesday'),
-        ('Wed', 'Wednesday'),
-        ('Thu', 'Thursday'),
-        ('Fri', 'Friday'),
-        ('Sat', 'Saturday'),
-        ('Sun', 'Sunday'),
-    ]
 
     days_of_week = forms.ModelMultipleChoiceField(
         queryset=Day.objects.all(),
@@ -23,7 +14,7 @@ class TrainCreationForm(forms.ModelForm):
 
     class Meta:
         model = Train
-        fields = ['trainNumber', 'trainName', 'source', 'departureTime', 'destination', 'arrivalTime', 'daysOfJourney', 'totalDistance', 'numberOfSeats', 'baseFare', 'farePerKilometre', 'numberOfStops', 'id']
+        fields = ['trainNumber', 'trainName', 'source', 'departureTime', 'destination', 'arrivalTime', 'daysOfJourney', 'totalDistance', 'numberOf1AC', 'numberOf2AC', 'numberOf3AC', 'numberOfSleeper', 'baseFare1AC', 'baseFare2AC', 'baseFare3AC', 'baseFareSleeper', 'farePerKilometre', 'numberOfStops', 'id']
 
         widgets = {
             'arrivalTime': forms.TimeInput(attrs={'type': 'time'}),

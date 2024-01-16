@@ -1,5 +1,6 @@
 from django.db import models
 from stations.models import Station
+from django.core.validators import MinValueValidator
 
 
 class Day(models.Model):
@@ -27,10 +28,16 @@ class Train(models.Model):
     destination = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='destination')
     arrivalTime = models.TimeField(null=True)
     daysOfJourney = models.PositiveIntegerField(null=True)
-    totalDistance = models.IntegerField()
-    numberOfSeats = models.PositiveIntegerField()
+    totalDistance = models.PositiveIntegerField()
+    numberOf1AC = models.IntegerField(validators=[MinValueValidator(0)], null=True)
+    numberOf2AC = models.IntegerField(validators=[MinValueValidator(0)], null=True)
+    numberOf3AC = models.IntegerField(validators=[MinValueValidator(0)], null=True)
+    numberOfSleeper = models.IntegerField(validators=[MinValueValidator(0)], null=True)
     daysOfWeek = models.ManyToManyField(Day, help_text='Select the days of the week', blank=True, related_name='daysOfWeek')
-    baseFare = models.DecimalField(null=True, decimal_places=2, max_digits=10)
+    baseFare1AC = models.DecimalField(null=True, decimal_places=2, max_digits=10)
+    baseFare2AC = models.DecimalField(null=True, decimal_places=2, max_digits=10)
+    baseFare3AC = models.DecimalField(null=True, decimal_places=2, max_digits=10)
+    baseFareSleeper = models.DecimalField(null=True, decimal_places=2, max_digits=10)
     farePerKilometre = models.DecimalField(null=True, decimal_places=2, max_digits=10)
     numberOfStops = models.IntegerField(default=0)
 
@@ -41,7 +48,10 @@ class TrainRun(models.Model):
     train = models.ForeignKey(Train, on_delete=models.CASCADE, related_name='train_runs')
     departure_date = models.DateField()
     arrival_date = models.DateField()
-    numberOfAvailableSeats = models.IntegerField(default=12)
+    numberOfAvailable1AC = models.IntegerField(default=0)
+    numberOfAvailable2AC = models.IntegerField(default=0)
+    numberOfAvailable3AC = models.IntegerField(default=0)
+    numberOfAvailableSleeper = models.IntegerField(default=0)
 
     def __str__(self):
         return f"Train: {self.train} - Departure: {self.departure_date} - Arrival: {self.arrival_date}"
@@ -67,3 +77,16 @@ class Route(models.Model):
 
     def __str__(self):
         return f"{self.train} - {self.station}"
+    
+class SeatClass(models.Model):
+    choices = [
+        ('3A', 'ThirdAC'),
+        ('2A', 'SecondAC'),
+        ('1A', 'FirstAC'),
+        ('S', 'Sleeper'),
+    ]
+
+    seat_class = models.TextField(choices=choices, default='S')
+
+    def __str__(self):
+        return f"{self.seat_class}"

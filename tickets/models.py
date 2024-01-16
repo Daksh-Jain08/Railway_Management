@@ -1,7 +1,7 @@
 from django.db import models
 import uuid
 from stations.models import Station
-from trains.models import Train, Schedule, Route, TrainRun
+from trains.models import Train, Schedule, Route, TrainRun, SeatClass
 from users.models import User
 
 class Passenger(models.Model):
@@ -27,7 +27,9 @@ class Ticket(models.Model):
     booking_time = models.DateTimeField(auto_now_add=True)
     passenger = models.OneToOneField(Passenger, on_delete=models.CASCADE, null=True, related_name='tickets')
     seatNumber = models.PositiveIntegerField(null=False, default=0)
+    seatClass = models.ForeignKey(SeatClass, on_delete=models.CASCADE, null=True)
     status = models.CharField(max_length=10, null=True)
+    fare = models.PositiveIntegerField(null=True)
 
     def __str__(self):
-        return f"Ticket ID: {self.id} --- {self.user} --- {self.passenger} - {self.trainRun.train}, Departure: {self.departure_station}, Destination {self.destination_station}, Seat Number: {self.seatNumber}, status: {self.status}"
+        return f"Ticket ID: {self.id} --- {self.user} --- {self.passenger} - {self.trainRun.train}, Departure: {self.departure_station}, Destination {self.destination_station}, Seat Number: {self.seatClass}-{self.seatNumber}, status: {self.status}, fare: {self.fare}"

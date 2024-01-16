@@ -47,7 +47,10 @@ def create_train_runs(train):
                     train=train,
                     departure_date=current_date,
                     arrival_date=current_date + timedelta(days=train.daysOfJourney),
-                    numberOfAvailableSeats=train.numberOfSeats,
+                    numberOfAvailable1AC=train.numberOf1AC,
+                    numberOfAvailable2AC=train.numberOf2AC,
+                    numberOfAvailable3AC=train.numberOf3AC,
+                    numberOfAvailableSleeper=train.numberOfSleeper,
                 )
 
             current_date += timedelta(days=1)
@@ -105,12 +108,15 @@ def TrainRouteView(request, pk, num_stops):
     RouteFormSet = formset_factory(RouteForm, extra=num_stops)
     if request.method == 'POST':
         route_formset = RouteFormSet(request.POST)
+        i = 0
         for route_form in route_formset:
             if route_form.is_valid():
                 if route_form.cleaned_data.get('station') != train.source and route_form.cleaned_data.get('station') != train.destination:
                     route = route_form.save(commit=False)
                     route.train = train
+                    print(i)
                     route.save()
+                    i+=1
                 else:
                     messages.error(request, "The train cannot have a stop at the source or destination!")
                     return redirect('create-train-route' ,pk=train.id, num_stops=num_stops)
@@ -205,11 +211,7 @@ def DeleteTrainView(request, pk):
                 for ticket in ticket_trainRun:
                     ticket_user = ticket.user
                     profile = ticket_user.profile
-                    departure_route = Route.objects.get(train=train, station=ticket.departure_station)
-                    destination_route = Route.objects.get(train=train, station=ticket.destination_station)
-                    distance = destination_route.distance - departure_route.distance
-                    fare = (train.baseFare + (train.farePerKilometre*distance))
-                    profile.wallet += fare
+                    profile.wallet += ticket.fare
                     profile.save()
             train.delete()
 

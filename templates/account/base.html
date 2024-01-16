@@ -24,10 +24,21 @@
 
     <div class="p-3 mb-3 bg-dark">
       <div class="container d-flex justify-content-between">
-          {% if user.is_authenticated %}
-          <div><a class="text-light" href="{% url 'account_email' %}">Change E-mail</a></div>
-          <div><a class="text-light" href="{% url 'home' %}">Home</a></div>
-          <div><a class="text-light" href="{% url 'account_logout' %}">Sign Out</a></div>
+        {% if user.is_authenticated %}
+          <div class="d-flex justify-content-evenly" style="width: 50%;">
+            <div><a class="text-light" href="{% url 'profile' %}">Your profile</a></div>
+            <div><a class="text-light" href="{% url 'my-tickets' %}">Your tickets</a></div>
+            <div><a class="text-light" href="{% url 'choose-route' %}">Book Ticket</a></div>
+            {% if user.is_staff %}
+              <div><a class="text-light" href="{% url 'create-train' %}">Create Train</a></div>
+              <div><a class="text-light" href="{% url 'create-station' %}">Create Station</a></div>
+              <div><a class="text-light" href="{% url 'all-trains' %}">All Trains</a></div>
+            {% endif %}
+          </div>
+          <div class="d-flex justify-content-evenly" style="width: 20%">
+            <div><a class="text-light" href="{% url 'home' %}">Home</a></div>
+            <div><a class="text-light" href="{% url 'account_logout' %}">Sign Out</a></div>
+          </div>
           {% else %}
           <div><a class="text-light" href="{% url 'account_login' %}">Sign In</a></div>
           <div><a class="text-light" href="{% url 'signup' %}">Sign Up</a></div>

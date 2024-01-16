@@ -15,7 +15,7 @@ def CreateStation(request):
                 message = messages.success(request, 'Station created succesfully')
                 return redirect('create-station')
             else:
-                message = messages.error('Error validating Form')
+                message = messages.error(request, form.errors)
         form = StationCreationForm()
         context = {'form': form, 'message': message}
         return render(request, 'stations/create_station.html', context)

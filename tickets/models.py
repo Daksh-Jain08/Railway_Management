@@ -19,7 +19,7 @@ class Passenger(models.Model):
 
 
 class Ticket(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='user_tickets')
     trainRun = models.ForeignKey(TrainRun, on_delete=models.CASCADE)
     date = models.DateField(null=True)
     departure_station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='departure_tickets')

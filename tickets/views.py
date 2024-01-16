@@ -53,6 +53,7 @@ def ValidTrainsView(request):
 
 @login_required(login_url='accounts/login/')
 def RouteChoosingView(request):
+    tickets.clear()
     form = RouteChoosingForm()
     context = {'form': form}
     return render(request, 'tickets/route_selection.html', context)
@@ -100,6 +101,9 @@ def TicketBookingView(request):
             unoccupied_seats.remove(seat_number)
             if available_seats>=(numberOfTickets-numberOfTicketsBooked):
                 ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatNumber=seat_number, status='confirmed')
+                numberOfTicketsBooked+=1
+                trainRun.numberOfAvailableSeats-=1
+                trainRun.save() 
             else:
                 ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, status='waiting')
             tickets.append(ticket)

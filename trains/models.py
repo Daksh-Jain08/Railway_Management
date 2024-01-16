@@ -29,7 +29,7 @@ class Train(models.Model):
     daysOfJourney = models.PositiveIntegerField(null=True)
     totalDistance = models.IntegerField()
     numberOfSeats = models.PositiveIntegerField()
-    daysOfWeek = models.ManyToManyField(Day, help_text='Select the days of the week', blank=True)
+    daysOfWeek = models.ManyToManyField(Day, help_text='Select the days of the week', blank=True, related_name='daysOfWeek')
     baseFare = models.DecimalField(null=True, decimal_places=2, max_digits=10)
     farePerKilometre = models.DecimalField(null=True, decimal_places=2, max_digits=10)
     numberOfStops = models.IntegerField(default=0)

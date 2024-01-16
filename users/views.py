@@ -1,25 +1,25 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import PasswordChangeForm
 from .forms import UserRegistrationForm, LoginForm
 from base.models import Profile
 
 
 #register a user
-def register(request):
-
+def Register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             var = form.save()
-            username = form.cleaned_data.get('username')
-            profile = Profile.objects.create(user=var)
-            message = messages.success(request, f'Your account has been created! You can now log in')
-            return redirect('login')
-    else:
-        form = UserRegistrationForm()
+            form.cleaned_data.get('username')
+            Profile.objects.create(user=var)
+            messages.success(request, f'Your account has been created! You can now log in')
+            return redirect('account_login')
+        
+    form = UserRegistrationForm()
     context = {'form': form}
-    return render(request, 'users/register.html', context)
+    return render(request, 'account/signup.html', context)
 
 
 #login a user
@@ -50,3 +50,8 @@ def logoutUser(request):
     logout(request)
     messages.info(request, 'You have been logged out.')
     return redirect('login')
+
+def CheckNewUser(request):
+    user = request.user
+    profile, created = Profile.objects.get_or_create(user=user)
+    return redirect('home')

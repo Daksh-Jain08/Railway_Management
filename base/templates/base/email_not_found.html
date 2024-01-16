@@ -1,9 +1,0 @@
-{% extends 'main.html' %}
-
-{% block content %}
-  <h2>Email Not Found</h2>
-  <p>The email you entered is not registered. Please sign up or try a different email address.</p>
-  <a href="{% url 'register' %}">Sign Up</a>
-  <br>
-  <a href="{% url 'login' %}">Go back to Login</a>
-{% endblock %}

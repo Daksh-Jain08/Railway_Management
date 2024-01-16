@@ -14,10 +14,6 @@ urlpatterns = [
     path("add-money/", base_views.MoneyAddingView, name='add-money'),
     path('delete-ticket/<str:pk>/', base_views.TicketCancellingView, name='delete-ticket'),
     path('edit-passenger-details/<str:pk>/', base_views.EditPassengerDetailsView, name='edit-passenger-details'),
-    
-    path("register/", users_views.register, name='register'),
-    path("login/", users_views.loginUser, name='login'),
-    path("logout/", users_views.logoutUser, name='logout'),
 
     path('create-train/', trains_views.CreateTrain, name='create-train'),
     path('create-train-route/<int:pk>/<int:num_stops>', trains_views.TrainRouteView, name='create-train-route'),
@@ -29,6 +25,9 @@ urlpatterns = [
     path('delete-train/<str:pk>/', trains_views.DeleteTrainView, name='delete-train'),
 
     path('create-station/', station_views.CreateStation, name='create-station'),
+
+    path('signup/', users_views.Register, name='signup'),
+    path('check-new-user/', users_views.CheckNewUser, name='check-new-user'),
 
     path('book-ticket/', tickets_views.TicketBookingView, name='book-ticket'),
     path('passenger-details/', tickets_views.PassengerDetailsView, name='passenger-details'),

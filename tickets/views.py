@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 tickets = []
 
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def ValidTrainsView(request):
     departure = request.GET.get('departure')
     destination = request.GET.get('destination')
@@ -51,13 +51,13 @@ def ValidTrainsView(request):
     context ={'trainRuns': valid_trainRuns, 'departure': departure, 'destination': destination, 'num_tickets': numberOfPassengers, 'day': date_day, 'month': date_month, 'year': date_year}
     return render(request, 'tickets/valid_trains.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def RouteChoosingView(request):
     form = RouteChoosingForm()
     context = {'form': form}
     return render(request, 'tickets/route_selection.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def TicketBookingView(request):
     message = None
 
@@ -135,7 +135,7 @@ def check_balance(user, train, numberOfTickets):
         return False
 
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def PassengerDetailsView(request):
     if len(tickets)!=0:
         message = None
@@ -173,7 +173,7 @@ def PassengerDetailsView(request):
         return redirect ('home')
     
     
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def BookingConfirmationView(request):
     if len(tickets)!=0:
         user = tickets[0].user

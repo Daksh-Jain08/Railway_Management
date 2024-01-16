@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from allauth.account.forms import SignupForm
 from .models import User
+from base.models import Profile
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -12,4 +14,4 @@ class UserRegistrationForm(UserCreationForm):
 
 class LoginForm(forms.Form):
     username = forms.CharField()
-    password = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput)

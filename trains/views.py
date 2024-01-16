@@ -9,7 +9,7 @@ from django.contrib import messages
 from datetime import timedelta, datetime
 from django.utils import timezone
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def CreateTrain(request):
     if request.user.is_staff:
         message = None
@@ -126,7 +126,7 @@ def TrainRouteView(request, pk, num_stops):
     context = {'formset': route_formset, 'message': message}
     return render(request, 'trains/create_train_route.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def ViewTrainRoute(request, pk):
     train = Train.objects.get(id=pk)
     train_route = Route.objects.filter(train=train).order_by('distance')
@@ -134,7 +134,7 @@ def ViewTrainRoute(request, pk):
     context = {'train': train, 'train_route': train_route}
     return render(request, 'trains/view_train_route.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def AllTicketsView(request, pk):
     user = request.user
     if user.is_staff:
@@ -153,7 +153,7 @@ def AllTicketsView(request, pk):
         return redirect('home')
     
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def AllTrainsView(request):
     user = request.user
     if user.is_staff:
@@ -165,7 +165,7 @@ def AllTrainsView(request):
         messages.warning(request, "You are not allowed to visit that page!!!")
         return redirect('home')
     
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def EditTrianView(request, pk):
     user=request.user
     if user.is_staff:

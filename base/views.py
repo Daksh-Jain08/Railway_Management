@@ -10,7 +10,7 @@ from .forms import MoneyAddingForm
 
 # Create your views here.
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def home(request):    
     user = request.user
     is_customer = user.is_customer
@@ -18,7 +18,7 @@ def home(request):
     context = {'is_customer': is_customer, 'is_staff': is_staff}
     return render(request, 'base/home.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def profileView(request):
     user = request.user
     tickets = Ticket.objects.filter(user=user, status='confirmed' or 'waiting')
@@ -28,14 +28,14 @@ def profileView(request):
     context = {'username': user.username, 'tickets_count': tickets_count, 'wallet': wallet}
     return render(request, 'base/profile.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def MyTicketsView(request):
     user = request.user
     tickets = Ticket.objects.filter(user=user)
     context = {'tickets': tickets}
     return render(request, 'base/my_tickets.html', context)
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def MoneyAddingView(request):
     message = None
     if request.method == 'POST':
@@ -54,7 +54,7 @@ def MoneyAddingView(request):
     return render(request, 'base/money_add.html', context)
 
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def TicketCancellingView(request, pk):
     ticket = Ticket.objects.get(id=pk)
     if ticket.status == 'cancelled':
@@ -76,12 +76,12 @@ def TicketCancellingView(request, pk):
         ticket.save()
         profile.wallet += fare
         profile.save()
-        message = messages.success(request, "Ticket has been canceled successfully. Money has been refunded.")
+        messages.success(request, "Ticket has been canceled successfully. Money has been refunded.")
         return redirect('my-tickets')
     
     return render(request, 'delete.html', {'obj': ticket})
 
-@login_required(login_url='/login')
+@login_required(login_url='accounts/login/')
 def EditPassengerDetailsView(request, pk):
     message = None
     passenger = Passenger.objects.get(id=pk)

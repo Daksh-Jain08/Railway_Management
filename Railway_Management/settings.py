@@ -12,16 +12,18 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 from allauth import account
+from production_secrets import secrets
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+secrets = secrets()
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-udfgxs+47c2vi35^7e-_vz)!8+aoz0tgn(au9*qr8f^g#d%)-x"
+SECRET_KEY = secrets["django_secret_key"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -107,11 +109,11 @@ WSGI_APPLICATION = "Railway_Management.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "railway_database",
-        "USER": "postgres",
-        "PASSWORD": "Test@123",
-        "HOST": "localhost",
-        "PORT": '',
+        "NAME": secrets["database"]["NAME"],
+        "USER": secrets["database"]["USER"],
+        "PASSWORD": secrets["database"]["PASSWORD"],
+        "HOST": secrets["database"]["HOST"],
+        "PORT": secrets["database"]["PORT"],
     }
 }
 

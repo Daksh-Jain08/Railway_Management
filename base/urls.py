@@ -20,6 +20,7 @@ urlpatterns = [
     path('create-train-schedule/<int:pk>/<int:num_stops>/', trains_views.TrainScheduleView, name='create-train-schedule'),
     path('view-train-route/<str:pk>', trains_views.ViewTrainRoute, name='view-train-route'),
     path('all-tickets/<str:pk>/', trains_views.AllTicketsView, name='all-tickets'),
+    path('download-bookings/', trains_views.ExportFile, name='download-bookings'),
     path('all-trains/', trains_views.AllTrainsView, name='all-trains'),
     path('edit-train/<str:pk>/', trains_views.EditTrianView, name='edit-train'),
     path('delete-train/<str:pk>/', trains_views.DeleteTrainView, name='delete-train'),

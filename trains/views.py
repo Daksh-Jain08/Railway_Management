@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.forms import formset_factory
+from django.http import HttpResponse
 from .forms import TrainCreationForm, RouteForm, ScheduleForm
 from .models import Train, TrainRun, Route, Schedule
 from stations.models import Station
@@ -8,6 +9,8 @@ from tickets.models import Ticket
 from django.contrib import messages
 from datetime import timedelta, datetime
 from django.utils import timezone
+from openpyxl import Workbook
+from django.core.paginator import Paginator
 
 @login_required(login_url='accounts/login/')
 def CreateTrain(request):
@@ -84,8 +87,8 @@ def TrainScheduleView(request, pk, num_stops):
                     Schedule.objects.create(trainRun=trainRun, station=station, date=date, daysRequiredToReach=daysRequiredToReach, arrivalTime=arrivalTime, departureTime=departureTime)
                     if i != len(stations)-2:
                         i+=1
-                    Schedule.objects.create(trainRun=trainRun, station=train.source, daysRequiredToReach=0, date=trainRun.departure_date, arrivalTime=train.departureTime, departureTime=train.departureTime)
-                    Schedule.objects.create(trainRun=trainRun, station=train.destination, daysRequiredToReach=train.daysOfJourney, date=trainRun.arrival_date, arrivalTime=train.arrivalTime, departureTime=train.arrivalTime)
+                Schedule.objects.create(trainRun=trainRun, station=train.source, daysRequiredToReach=0, date=trainRun.departure_date, arrivalTime=train.departureTime, departureTime=train.departureTime)
+                Schedule.objects.create(trainRun=trainRun, station=train.destination, daysRequiredToReach=train.daysOfJourney, date=trainRun.arrival_date, arrivalTime=train.arrivalTime, departureTime=train.arrivalTime)
         else:
             train.delete()
             print(schedule_formset.errors)
@@ -146,12 +149,13 @@ def AllTicketsView(request, pk):
     if user.is_staff:
         train = Train.objects.get(id=pk)
         trainRuns = TrainRun.objects.filter(train=train)
-        trainRun_tickets = {}
+        all_tickets = []
         for trainRun in trainRuns:
             tickets = Ticket.objects.filter(trainRun=trainRun)
-            trainRun_tickets[trainRun] = tickets
+            for ticket in tickets:
+                all_tickets.append(ticket)
         
-        context = {'trainRun_tickets': trainRun_tickets.items()}
+        context = {'all_tickets': all_tickets, 'train': train}
         return render(request, 'trains/all_tickets.html', context)
 
     else:
@@ -223,3 +227,48 @@ def DeleteTrainView(request, pk):
     else:
         message = messages.warning(request, "You are not allowed to visit that page!!!")
         return redirect('home')
+    
+
+def ExportFile(request):
+    pk = request.GET.get('pk')
+    train = Train.objects.get(id=pk)
+    trainRuns = TrainRun.objects.filter(train=train).order_by('departure_date')
+
+    all_tickets = []
+    for trainRun in trainRuns:
+        tickets = Ticket.objects.filter(trainRun=trainRun)
+        for ticket in tickets:
+            if ticket.date > datetime.now():
+                all_tickets.append(ticket)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f"attachment; filename={train}_tickets.xlsx"
+    
+    workbook = Workbook()
+
+    worksheet = workbook.active
+
+    worksheet.merge_cells('A1:J1')
+    first_cell = worksheet['A1']
+    first_cell.value = f"tickets for {train}"
+
+    columns = ['user', 'date', 'departure_station', 'destination_station', 'booking_time', 'passenger', 'seatNumber', 'seatClass', 'status', 'fare']
+    row_num = 2
+
+    for col_num, col_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = col_title
+        
+    for ticket in all_tickets:
+        row_num+=1
+        date = ticket.date.strftime("%Y-%m-%d")
+        booking_time = ticket.booking_time.strftime("%Y-%m-%d %H:%M:%S")
+
+        row = [ticket.user.username, date, ticket.departure_station.stationName, ticket.destination_station.stationName, booking_time, ticket.passenger.name, ticket.seatNumber, ticket.seatClass.seat_class, ticket.status, ticket.fare]
+
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    workbook.save(response)
+    return response

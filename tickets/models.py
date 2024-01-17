@@ -32,4 +32,4 @@ class Ticket(models.Model):
     fare = models.PositiveIntegerField(null=True)
 
     def __str__(self):
-        return f"Ticket ID: {self.id} --- {self.user} --- {self.passenger} - {self.trainRun.train}, Departure: {self.departure_station}, Destination {self.destination_station}, Seat Number: {self.seatClass}-{self.seatNumber}, status: {self.status}, fare: {self.fare}"
+        return f"Ticket ID: {self.id} --- {self.user} --- {self.passenger} - {self.trainRun.train}, {self.date}, Departure: {self.departure_station}, Destination {self.destination_station}, Seat Number: {self.seatClass}-{self.seatNumber}, status: {self.status}, fare: {self.fare}"

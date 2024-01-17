@@ -39,14 +39,17 @@ def ValidTrainsView(request):
             destination_route = Route.objects.get(train=train, station=destination_station)
             trainRuns = TrainRun.objects.filter(train=train)
         except:
-            pass
+            print(train)
         else:
+            print(departure_route.distance)
+            print(destination_route.distance)
             if departure_route.distance < destination_route.distance:
                 for trainRun in trainRuns:
                     try:
                         schedule = Schedule.objects.get(trainRun=trainRun, station=departure_station, date=date)
+                        print(schedule)
                     except:
-                        print("Error")
+                        print('error')
                     else:
                         valid_trainRuns.append(trainRun)
     context ={'trainRuns': valid_trainRuns, 'departure': departure, 'destination': destination, 'num_tickets': numberOfPassengers, 'day': date_day, 'month': date_month, 'year': date_year, 'seatClass': seatClass}

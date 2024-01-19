@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from .forms import TrainCreationForm, RouteForm, ScheduleForm
 from .models import Train, TrainRun, Route, Schedule
 from stations.models import Station
+from .tasks import schedule
 from tickets.models import Ticket
 from django.contrib import messages
 from datetime import timedelta, datetime
@@ -153,7 +154,8 @@ def AllTicketsView(request, pk):
         for trainRun in trainRuns:
             tickets = Ticket.objects.filter(trainRun=trainRun)
             for ticket in tickets:
-                all_tickets.append(ticket)
+                if ticket.date>datetime.today().date():
+                    all_tickets.append(ticket)
         
         context = {'all_tickets': all_tickets, 'train': train}
         return render(request, 'trains/all_tickets.html', context)
@@ -230,6 +232,7 @@ def DeleteTrainView(request, pk):
     
 
 def ExportFile(request):
+    today = datetime.today().date()
     pk = request.GET.get('pk')
     train = Train.objects.get(id=pk)
     trainRuns = TrainRun.objects.filter(train=train).order_by('departure_date')
@@ -238,7 +241,7 @@ def ExportFile(request):
     for trainRun in trainRuns:
         tickets = Ticket.objects.filter(trainRun=trainRun)
         for ticket in tickets:
-            if ticket.date > datetime.now():
+            if ticket.date > today:
                 all_tickets.append(ticket)
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -272,3 +275,7 @@ def ExportFile(request):
 
     workbook.save(response)
     return response
+
+def daily_trainruns(request):
+    schedule.delay()
+    return HttpResponse("New Train runs have been created successfully!!")

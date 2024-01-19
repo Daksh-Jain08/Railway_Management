@@ -3,7 +3,7 @@
 {% block content %}
 
 <form method="GET" action="{% url 'valid-trains' %}">
-    {{ form }}
+    {{ form.as_p }}
     <input type="submit" value="Show Trains">
 </form>
 

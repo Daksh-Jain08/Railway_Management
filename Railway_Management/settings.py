@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 from allauth import account
 from production_secrets import secrets
 
@@ -28,7 +29,7 @@ SECRET_KEY = secrets["django_secret_key"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # "django_celery_beat",
     
     "base.apps.BaseConfig",
     "users.apps.UsersConfig",
@@ -67,6 +69,16 @@ SOCIALACCOUNT_PROVIDERS = {
         "AUTH_PARAMS": {"access_type": "online"},
     }
 }
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", 'redis://redis:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", 'redis://redis:6379/0')
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

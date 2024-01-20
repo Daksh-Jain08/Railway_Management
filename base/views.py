@@ -2,11 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.contrib import messages
-from trains.models import Train, Route
+from trains.models import Train, Route, Schedule, TrainRun
 from tickets.models import Ticket, Passenger
 from tickets.forms import PassengerForm
 from .models import Profile
 from .forms import MoneyAddingForm
+import datetime
+from django.utils import timezone
 
 # Create your views here.
 
@@ -62,12 +64,14 @@ def MoneyAddingView(request):
 @login_required(login_url='accounts/login/')
 def TicketCancellingView(request, pk):
     ticket = Ticket.objects.get(id=pk)
+    trainRun = ticket.trainRun
+    tickets = Ticket.objects.filter(trainRun=trainRun, status='waiting').order_by('booking_time')
     if ticket.status == 'cancelled':
         messages.error(request, "The ticket is already cancelled!!")
         return redirect('my-tickets')
     user = ticket.user
     profile = Profile.objects.get(user=user)
-    fare = (ticket.fare)
+    fare = ticket.fare
 
     if request.user != ticket.user:
         messages.warning(request, "What are you trying to do? You are not allowed to do this!!")
@@ -77,9 +81,30 @@ def TicketCancellingView(request, pk):
         ticket.save()
         profile.wallet += fare
         profile.save()
+        if(ticket.seatClass=='3A'):
+            trainRun.numberOfAvailable1AC+=1
+        if(ticket.seatClass=='2A'):
+            trainRun.numberOfAvailable2AC+=1
+        if(ticket.seatClass=='1A'):
+            trainRun.numberOfAvailable3AC+=1
+        if(ticket.seatClass=='S'):
+            trainRun.numberOfAvailableSleeper+=1
         messages.success(request, "Ticket has been canceled successfully. Money has been refunded.")
+
+        if len(tickets) != 0:
+            tickets[0].status = 'confirmed'
+            if(ticket.seatClass=='3A'):
+                trainRun.numberOfAvailable1AC-=1
+            if(ticket.seatClass=='2A'):
+                trainRun.numberOfAvailable2AC-=1
+            if(ticket.seatClass=='1A'):
+                trainRun.numberOfAvailable3AC-=1
+            if(ticket.seatClass=='S'):
+                trainRun.numberOfAvailableSleeper-=1
+            tickets[0].save()
+        
         return redirect('my-tickets')
-    
+        
     return render(request, 'delete.html', {'obj': ticket})
 
 @login_required(login_url='accounts/login/')

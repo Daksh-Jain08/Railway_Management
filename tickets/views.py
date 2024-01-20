@@ -3,7 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import random
 import datetime
-from .tasks import *
 from django.forms import formset_factory
 from .models import Ticket, Passenger
 from trains.models import Train, TrainRun, Route, Schedule, SeatClass
@@ -41,10 +40,8 @@ def ValidTrainsView(request):
             destination_route = Route.objects.get(train=train, station=destination_station)
             trainRuns = TrainRun.objects.filter(train=train)
         except:
-            print(train)
+            pass
         else:
-            print(departure_route.distance)
-            print(destination_route.distance)
             if departure_route.distance < destination_route.distance:
                 for trainRun in trainRuns:
                     try:
@@ -121,9 +118,9 @@ def TicketBookingView(request):
 
     if profile.wallet>fare:
         for _ in range(numberOfTickets):
-            seat_number = random.choice(unoccupied_seats)
-            unoccupied_seats.remove(seat_number)
             if available_seats>=(numberOfTickets-numberOfTicketsBooked):
+                seat_number = random.choice(unoccupied_seats)
+                unoccupied_seats.remove(seat_number)
                 ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatNumber=seat_number, seatClass=seatClass, fare=fare, status='confirmed')
                 numberOfTicketsBooked+=1
                 if(seatClass.seat_class=='1A'):
@@ -139,7 +136,6 @@ def TicketBookingView(request):
                 ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatClass=seatClass, fare=fare, status='waiting')
             tickets.append(ticket)
 
-        print(unoccupied_seats)
         return redirect('passenger-details')
     else:
         messages.warning(request, "You don't have sufficient money to book these tickets!")
@@ -150,7 +146,6 @@ def TicketBookingView(request):
 def get_available_seats(trainRun, seatClass):
     tickets = Ticket.objects.filter(trainRun=trainRun, seatClass=seatClass)
     ticket_count = tickets.count()
-    print(seatClass)
     if(seatClass.seat_class=='3A'):
         numberOfSeats = trainRun.numberOfAvailable1AC
     if(seatClass.seat_class=='2A'):
@@ -165,7 +160,6 @@ def get_available_seats(trainRun, seatClass):
 
 
 def check_balance(user, train, numberOfTickets):
-    print(type(user))
     profile = Profile.objects.get(user=user)
     wallet = profile.wallet
     fare = train.fare * numberOfTickets

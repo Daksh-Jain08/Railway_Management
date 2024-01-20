@@ -42,9 +42,14 @@ def MoneyAddingView(request):
         form = MoneyAddingForm(request.POST)
         if form.is_valid():
             money = form.cleaned_data.get('money')
+            if money<=0:
+                messages.error(request, "Please give a positive value!")
+                return redirect('add-money')
             profile = Profile.objects.get(user=request.user)
             profile.wallet += money
             profile.save()
+            messages.success(request, f"{money} Rupees have been added to your profile.")
+            return redirect('profile')
 
         else:
             message = messages.error(request, "Error validating Form!")
@@ -62,14 +67,10 @@ def TicketCancellingView(request, pk):
         return redirect('my-tickets')
     user = ticket.user
     profile = Profile.objects.get(user=user)
-    trainRun = ticket.trainRun
-    departure_route = Route.objects.get(train=trainRun.train, station=ticket.departure_station)
-    destination_route = Route.objects.get(train=trainRun.train, station=ticket.destination_station)
-    distance = destination_route.distance - departure_route.distance
-    fare = (trainRun.train.baseFare + (trainRun.train.farePerKilometre*distance))
+    fare = (ticket.fare)
 
     if request.user != ticket.user:
-        message = messages.warning(request, "What are you trying to do? You are not allowed to do this!!")
+        messages.warning(request, "What are you trying to do? You are not allowed to do this!!")
 
     if request.method == 'POST':
         ticket.status = 'cancelled'

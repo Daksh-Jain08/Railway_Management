@@ -1,0 +1,12 @@
+{% extends 'account/base.html' %}
+
+{% block content %}
+
+<h2>All Train Runs for train {{train}}</h2>
+{% for trainRun in trainRuns %}
+    <a href=" {% url 'all-tickets-trainRun' trainRun.id %}"> See all upcoming Bookings</a><span>|</span>
+    <a href=" {% url 'delete-trainRun' trainRun.id %}"> Delete Train</a><span>|</span>
+    <a href=" {% url 'download-bookings' %}?pk={{trainRun.id}}"> Download Bookings</a><span>|</span>
+    <li>{{ trainRun }}</li>
+{% endfor %}
+{% endblock content %}

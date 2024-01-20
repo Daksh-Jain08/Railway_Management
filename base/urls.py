@@ -19,11 +19,14 @@ urlpatterns = [
     path('create-train-route/<int:pk>/<int:num_stops>', trains_views.TrainRouteView, name='create-train-route'),
     path('create-train-schedule/<int:pk>/<int:num_stops>/', trains_views.TrainScheduleView, name='create-train-schedule'),
     path('view-train-route/<str:pk>', trains_views.ViewTrainRoute, name='view-train-route'),
-    path('all-tickets/<str:pk>/', trains_views.AllTicketsView, name='all-tickets'),
+    path('all-tickets/train/<str:pk>/', trains_views.AllTicketsTrainView, name='all-tickets-train'),
+    path('all-tickets/trainRun/<str:pk>/', trains_views.AllTicketsTrainRunView, name='all-tickets-trainRun'),
     path('download-bookings/', trains_views.ExportFile, name='download-bookings'),
     path('all-trains/', trains_views.AllTrainsView, name='all-trains'),
+    path('all-trainRuns/<int:pk>/', trains_views.AllTrainRunsView, name='all-trainRuns'),
     path('edit-train/<str:pk>/', trains_views.EditTrianView, name='edit-train'),
     path('delete-train/<str:pk>/', trains_views.DeleteTrainView, name='delete-train'),
+    path('delete-trainRun/<str:pk>/', trains_views.DeleteTrainRunView, name='delete-trainRun'),
 
     path('create-station/', station_views.CreateStation, name='create-station'),
 

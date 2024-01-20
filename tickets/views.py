@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import random
 import datetime
+from .tasks import *
 from django.forms import formset_factory
 from .models import Ticket, Passenger
 from trains.models import Train, TrainRun, Route, Schedule, SeatClass
@@ -10,6 +11,7 @@ from stations.models import Station
 from .forms import TicketBookingForm, PassengerForm, RouteChoosingForm
 from base.models import Profile
 from django.contrib.auth.decorators import login_required
+from trains.tasks import send_ticket_mail
 
 
 tickets = []
@@ -64,8 +66,6 @@ def RouteChoosingView(request):
 
 @login_required(login_url='accounts/login/')
 def TicketBookingView(request):
-    message = None
-
     user = request.user
     id = request.GET.get('pk')
     departure = request.GET.get('departure')
@@ -98,22 +98,22 @@ def TicketBookingView(request):
     unoccupied_seats = []
     if(seatClass.seat_class=='1A'):
         fare = (train.baseFare1AC + (train.farePerKilometre*distance))*numberOfTickets
-        for i in range(1, train.numberOf1AC):
+        for i in range(1, train.numberOf1AC+1):
             if i not in occupied_seats:
                 unoccupied_seats.append(i)
     elif(seatClass.seat_class=='2A'):
         fare = (train.baseFare2AC + (train.farePerKilometre*distance))*numberOfTickets
-        for i in range(1, train.numberOf2AC):
+        for i in range(1, train.numberOf2AC+1):
             if i not in occupied_seats:
                 unoccupied_seats.append(i)
     elif(seatClass.seat_class=='3A'):
         fare = (train.baseFare3AC + (train.farePerKilometre*distance))*numberOfTickets
-        for i in range(1, train.numberOf3AC):
+        for i in range(1, train.numberOf3AC+1):
             if i not in occupied_seats:
                 unoccupied_seats.append(i)
     elif(seatClass.seat_class=='S'):
         fare = (train.baseFareSleeper + (train.farePerKilometre*distance))*numberOfTickets
-        for i in range(1, train.numberOfSleeper):
+        for i in range(1, train.numberOfSleeper+1):
             if i not in occupied_seats:
                 unoccupied_seats.append(i)
 
@@ -136,13 +136,13 @@ def TicketBookingView(request):
                     trainRun.numberOfAvailableSleeper-=1
                 trainRun.save()
             else:
-                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatClass=seatClass, status='waiting')
+                ticket = Ticket.objects.create(user=user, trainRun=trainRun, date=date, departure_station=departure_station, destination_station=destination_station, seatClass=seatClass, fare=fare, status='waiting')
             tickets.append(ticket)
 
         print(unoccupied_seats)
         return redirect('passenger-details')
     else:
-        messages.warning(request, "You don't have sufficient ,money to book these tickets!")
+        messages.warning(request, "You don't have sufficient money to book these tickets!")
         
     return redirect('choose-route')
 
@@ -200,6 +200,7 @@ def PassengerDetailsView(request):
                     i=0
                     for _ in range(len(tickets)):
                         ticket[i].delete()
+                    tickets.clear()
                     return redirect('book-ticket')
             
             return redirect('booking-confirmation')
@@ -219,10 +220,12 @@ def BookingConfirmationView(request):
         user = tickets[0].user
         fare = tickets[0].fare
         profile = Profile.objects.get(user=user)
-        profile.wallet -= fare*(len(tickets))
+        profile.wallet -= fare * len(tickets)
         profile.save()
+        send_ticket_mail(user, tickets)
+        tickets.clear()
         return render(request, 'tickets/booking_confirmation.html')
     
     else:
         messages.warning(request, "You are not allowed to enter that page in this manner")
-        return redirect ('home')
+        return redirect ('send-email')

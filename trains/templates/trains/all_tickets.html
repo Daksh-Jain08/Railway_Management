@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<a href=" {% url 'download-bookings' %}?pk={{train.id}}">Download as Excel</a>
+<a href=" {% url 'download-bookings' %}?pk={{train.id}}&type={{type}}">Download as Excel</a>
 
 {% for ticket in all_tickets %}
     <li>{{ticket}}</li>

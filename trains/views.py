@@ -70,24 +70,30 @@ def TrainScheduleView(request, pk, num_stops):
 
     ScheduleFormSet = formset_factory(ScheduleForm, extra=num_stops)
     if request.method == 'POST':
-        print("Entered1")
         schedule_formset = ScheduleFormSet(request.POST)
         trainRuns = TrainRun.objects.filter(train=train)
-        print(schedule_formset)
         if schedule_formset.is_valid():
-            print('Entered2')
             for trainRun in trainRuns:
                 i=1
-                print('Entered3')
+                schedules = []
+                days = []
                 for schedule_form in schedule_formset:
                     daysRequiredToReach = schedule_form.cleaned_data.get('daysRequiredToReach')
                     arrivalTime = schedule_form.cleaned_data.get('arrivalTime')
                     departureTime = schedule_form.cleaned_data.get('departureTime')
                     station = stations[i]
                     date = trainRun.departure_date + timedelta(days=daysRequiredToReach)
-                    Schedule.objects.create(trainRun=trainRun, station=station, date=date, daysRequiredToReach=daysRequiredToReach, arrivalTime=arrivalTime, departureTime=departureTime)
-                    if i != len(stations)-2:
-                        i+=1
+                    date_time = datetime.datetime()
+                    if date <= trainRun.arrival_date:
+                        schedule = Schedule.objects.create(trainRun=trainRun, station=station, date=date, daysRequiredToReach=daysRequiredToReach, arrivalTime=arrivalTime, departureTime=departureTime)
+                        schedules.append(schedule)
+                        if i != len(stations)-2:
+                            i+=1
+                    else:
+                        messages.error(request, "No intermediate stops can have days required to reach greater than total days of train's journey!")
+                        for schedule in schedule:
+                            schedule.delete()
+                        return redirect('create-train-schedule', pk=pk, num_stops=num_stops)
                 Schedule.objects.create(trainRun=trainRun, station=train.source, daysRequiredToReach=0, date=trainRun.departure_date, arrivalTime=train.departureTime, departureTime=train.departureTime)
                 Schedule.objects.create(trainRun=trainRun, station=train.destination, daysRequiredToReach=train.daysOfJourney, date=trainRun.arrival_date, arrivalTime=train.arrivalTime, departureTime=train.arrivalTime)
         else:
@@ -112,15 +118,16 @@ def TrainRouteView(request, pk, num_stops):
     RouteFormSet = formset_factory(RouteForm, extra=num_stops)
     if request.method == 'POST':
         route_formset = RouteFormSet(request.POST)
-        i = 0
         for route_form in route_formset:
             if route_form.is_valid():
                 if route_form.cleaned_data.get('station') != train.source and route_form.cleaned_data.get('station') != train.destination:
-                    route = route_form.save(commit=False)
-                    route.train = train
-                    print(i)
-                    route.save()
-                    i+=1
+                    if route_form.cleaned_data.get('distance')<train.totalDistance:
+                        route = route_form.save(commit=False)
+                        route.train = train
+                        route.save()
+                    else:
+                        messages.error(request, "The distance of any intermediate stop should not be greated than train's total distance!")
+                        return redirect('create-train-route' ,pk=train.id, num_stops=num_stops)
                 else:
                     messages.error(request, "The train cannot have a stop at the source or destination!")
                     return redirect('create-train-route' ,pk=train.id, num_stops=num_stops)
@@ -145,7 +152,7 @@ def ViewTrainRoute(request, pk):
     return render(request, 'trains/view_train_route.html', context)
 
 @login_required(login_url='accounts/login/')
-def AllTicketsView(request, pk):
+def AllTicketsTrainView(request, pk):
     user = request.user
     if user.is_staff:
         train = Train.objects.get(id=pk)
@@ -157,7 +164,25 @@ def AllTicketsView(request, pk):
                 if ticket.date>datetime.today().date():
                     all_tickets.append(ticket)
         
-        context = {'all_tickets': all_tickets, 'train': train}
+        context = {'all_tickets': all_tickets, 'train': train, 'type': 'train'}
+        return render(request, 'trains/all_tickets.html', context)
+
+    else:
+        messages.warning(request, "You are not allowed to visit that page!!!")
+        return redirect('home')
+
+@login_required(login_url='accounts/login/')
+def AllTicketsTrainRunView(request, pk):
+    user = request.user
+    if user.is_staff:
+        trainRun = TrainRun.objects.get(id=pk)
+        tickets = Ticket.objects.filter(trainRun=trainRun)
+        all_tickets = []
+        for ticket in tickets:
+            if ticket.date>datetime.today().date():
+                all_tickets.append(ticket)
+        
+        context = {'all_tickets': all_tickets, 'train': trainRun, 'type': 'trainRun'}
         return render(request, 'trains/all_tickets.html', context)
 
     else:
@@ -172,6 +197,19 @@ def AllTrainsView(request):
         trains = Train.objects.all()
         context = {'trains': trains}
         return render(request, 'trains/all_trains.html', context)
+    
+    else:
+        messages.warning(request, "You are not allowed to visit that page!!!")
+        return redirect('home')
+    
+@login_required(login_url='accounts/login/')
+def AllTrainRunsView(request, pk):
+    user = request.user
+    if user.is_staff:
+        train = Train.objects.get(id=pk)
+        trainRuns = TrainRun.objects.filter(train=train)
+        context = {'trainRuns': trainRuns, 'train': train}
+        return render(request, 'trains/all_trainRuns.html', context)
     
     else:
         messages.warning(request, "You are not allowed to visit that page!!!")
@@ -201,10 +239,10 @@ def EditTrianView(request, pk):
         message = messages.warning(request, "You are not allowed to visit that page!!!")
         return redirect('home')
 
+@login_required(login_url='accounts/login/')
 def DeleteTrainView(request, pk):
     user = request.user
     if user.is_staff:
-        message = None
         train = Train.objects.get(id=pk)
         if request.method == 'POST':
             trainRuns = TrainRun.objects.filter(train=train)
@@ -227,22 +265,57 @@ def DeleteTrainView(request, pk):
         return render(request, 'delete.html', {'obj': train})
     
     else:
-        message = messages.warning(request, "You are not allowed to visit that page!!!")
+        messages.warning(request, "You are not allowed to visit that page!!!")
         return redirect('home')
     
+@login_required(login_url='accounts/login/')
+def DeleteTrainRunView(request, pk):
+    user = request.user
+    if user.is_staff:
+        trainRun = TrainRun.objects.get(id=pk)
+        if request.method == 'POST':
+            tickets = Ticket.objects.filter(trainRun = trainRun)
+            
+            for ticket in tickets:
+                ticket_user = ticket.user
+                profile = ticket_user.profile
+                profile.wallet += ticket.fare
+                profile.save()
+            trainRun.delete()
 
+            messages.success(request, "TrainRun deleted successfully.")
+            return redirect('all-trainruns')
+        
+        return render(request, 'delete.html', {'obj': trainRun})
+    
+    else:
+        messages.warning(request, "You are not allowed to visit that page!!!")
+        return redirect('home')
+
+@login_required(login_url='accounts/login/')
 def ExportFile(request):
     today = datetime.today().date()
     pk = request.GET.get('pk')
-    train = Train.objects.get(id=pk)
-    trainRuns = TrainRun.objects.filter(train=train).order_by('departure_date')
+    type = request.GET.get('type')
+    if type=='train':
+        train = Train.objects.get(id=pk)
+        trainRuns = TrainRun.objects.filter(train=train).order_by('departure_date')
 
-    all_tickets = []
-    for trainRun in trainRuns:
+        all_tickets = []
+        for trainRun in trainRuns:
+            tickets = Ticket.objects.filter(trainRun=trainRun)
+            for ticket in tickets:
+                if ticket.date > today:
+                    all_tickets.append(ticket)
+    
+    else:
+        trainRun = TrainRun.objects.get(id=pk)
+        train = TrainRun.train
+        all_tickets = []
         tickets = Ticket.objects.filter(trainRun=trainRun)
         for ticket in tickets:
             if ticket.date > today:
-                all_tickets.append(ticket)
+                all_tickets.append(ticket)        
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f"attachment; filename={train}_tickets.xlsx"
